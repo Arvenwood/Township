@@ -34,7 +34,7 @@ object CommandTownCreate : CommandExecutor {
             throw CommandException(Text.of("Town name must be alphanumeric and from 2 to 32 characters."))
         }
 
-        if (TownService.get().getTown(name) != null) {
+        if (TownService.get().getTown(name).isPresent) {
             throw CommandException(Text.of("The town '$name' already exists!"))
         }
 
