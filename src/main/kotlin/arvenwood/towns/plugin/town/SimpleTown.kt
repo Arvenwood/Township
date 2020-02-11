@@ -4,44 +4,86 @@ import arvenwood.towns.api.claim.Claim
 import arvenwood.towns.api.claim.ClaimService
 import arvenwood.towns.api.resident.Resident
 import arvenwood.towns.api.town.Town
+import arvenwood.towns.plugin.event.town.ChangeTownEventImpl
+import org.spongepowered.api.Sponge
 import org.spongepowered.api.world.Location
 import org.spongepowered.api.world.World
 import java.util.*
 
 data class SimpleTown(
-    override val uniqueId: UUID,
-    override val name: String,
-    override val owner: Resident
+    private val uniqueId: UUID,
+    private var name: String,
+    private var owner: Resident
 ) : Town {
 
-    private val residentSet = HashSet<Resident>()
+    private val residents = HashSet<Resident>()
 
-    override val residents: Set<Resident> get() = this.residentSet.toSet()
+    override fun getUniqueId(): UUID =
+        this.uniqueId
+
+    override fun getName(): String =
+        this.name
+
+    override fun setName(name: String) {
+        val event = ChangeTownEventImpl.Name(this.name, name, this, Sponge.getCauseStackManager().currentCause)
+        Sponge.getEventManager().post(event)
+        if (event.isCancelled) {
+            return
+        }
+
+        this.name = event.newName
+    }
+
+    override fun getOwner(): Resident =
+        this.owner
+
+    override fun setOwner(resident: Resident) {
+        val event = ChangeTownEventImpl.Owner(this.owner, resident, this, Sponge.getCauseStackManager().currentCause)
+        Sponge.getEventManager().post(event)
+        if (event.isCancelled) {
+            return
+        }
+
+        this.owner = event.newOwner
+    }
+
+    override fun getResidents(): Collection<Resident> =
+        this.residents.toSet()
 
     override fun addResident(resident: Resident): Boolean {
-        if (resident in this.residentSet) {
+        if (resident in this.residents) {
             return false
         }
 
-        this.residentSet += resident
-        resident.town = this
+        val event = ChangeTownEventImpl.Join(resident, this, Sponge.getCauseStackManager().currentCause)
+        Sponge.getEventManager().post(event)
+        if (event.isCancelled) {
+            return false
+        }
+
+        this.residents += resident
+        resident.setTown(this)
         return true
     }
 
     override fun removeResident(resident: Resident): Boolean {
-        if (resident !in this.residentSet) {
+        if (resident !in this.residents) {
             return false
         }
 
-        this.residentSet -= resident
-        resident.town = null
+        val event = ChangeTownEventImpl.Leave(resident, this, Sponge.getCauseStackManager().currentCause)
+        Sponge.getEventManager().post(event)
+        if (event.isCancelled) {
+            return false
+        }
+
+        this.residents -= resident
+        resident.setTown(null)
         return true
     }
 
-    override val claims: Collection<Claim> get() = ClaimService.get().getClaimsFor(this)
-
-    override fun getClaimAt(location: Location<World>): Claim? =
-        ClaimService.get().getClaimAt(location)?.takeIf { it.town == this }
+    override fun getClaimAt(location: Location<World>): Optional<Claim> =
+        ClaimService.get().getClaimAt(location).filter { it.town == this }
 
     class Builder : Town.Builder {
 
@@ -60,6 +102,11 @@ data class SimpleTown(
         }
 
         override fun residents(residents: Iterable<Resident>): Town.Builder {
+            this.residents = residents.toSet()
+            return this
+        }
+
+        override fun residents(vararg residents: Resident): Town.Builder {
             this.residents = residents.toSet()
             return this
         }

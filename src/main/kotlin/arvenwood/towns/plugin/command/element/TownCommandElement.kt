@@ -9,6 +9,6 @@ import org.spongepowered.api.text.Text
 fun town(key: Text): CommandElement =
     GenericArguments.choices(
         key,
-        { TownService.get().towns.map(Town::name) },
+        { TownService.get().towns.map(Town::getName) },
         { TownService.get().getTown(it) }
     )

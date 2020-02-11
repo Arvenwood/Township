@@ -11,17 +11,17 @@ class SimpleResidentService : ResidentService {
     private val residentsById = HashMap<UUID, Resident>()
     private val residentsByName = HashMap<String, Resident>()
 
-    override val residents: Collection<Resident>
-        get() = this.residentsById.values
+    override fun getResidents(): Collection<Resident> =
+        this.residentsById.values.toSet()
 
-    override fun getResident(uniqueId: UUID): Resident? =
-        this.residentsById[uniqueId]
+    override fun getResident(uniqueId: UUID): Optional<Resident> =
+        Optional.ofNullable(this.residentsById[uniqueId])
 
-    override fun getResident(name: String): Resident? =
-        this.residentsByName[name]
+    override fun getResident(name: String): Optional<Resident> =
+        Optional.ofNullable(this.residentsByName[name])
 
     override fun getOrCreateResident(player: Player): Resident {
-        this.getResident(player.uniqueId)?.let { return it }
+        this.getResident(player.uniqueId).orElse(null)?.let { return it }
 
         val resident = SimpleResident(
             uniqueId = player.uniqueId,

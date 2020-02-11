@@ -27,10 +27,10 @@ object CommandTownUnclaim : CommandExecutor {
 
         val resident: Resident = ResidentService.get().getOrCreateResident(src)
 
-        val town: Town = resident.town
+        val town: Town = resident.town.orElse(null)
             ?: throw CommandException(Text.of("You must be in a town to use that command."))
 
-        val claim: Claim = ClaimService.get().getClaimAt(src.location)
+        val claim: Claim = ClaimService.get().getClaimAt(src.location).orElse(null)
             ?: throw CommandException(Text.of("This chunk has not been claimed."))
 
         if (claim.town != town) {

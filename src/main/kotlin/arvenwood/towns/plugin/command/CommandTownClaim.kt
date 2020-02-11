@@ -27,10 +27,10 @@ object CommandTownClaim : CommandExecutor {
 
         val resident: Resident = ResidentService.get().getOrCreateResident(src)
 
-        val town: Town = resident.town
+        val town: Town = resident.town.orElse(null)
             ?: throw CommandException(Text.of("You must be in a town to use that command."))
 
-        ClaimService.get().getClaimAt(src.location)?.let {
+        ClaimService.get().getClaimAt(src.location).orElse(null)?.let {
             throw CommandException(Text.of("This chunk has already been claimed by ${it.town.name}."))
         }
 

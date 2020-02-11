@@ -29,7 +29,7 @@ object CommandTownDelete : CommandExecutor {
 
         val resident: Resident = ResidentService.get().getOrCreateResident(player)
 
-        val town: Town = resident.town
+        val town: Town = resident.town.orElse(null)
             ?: throw CommandException(Text.of("You must be in a town to use that command."))
 
         if (!resident.isOwner) {
@@ -39,7 +39,7 @@ object CommandTownDelete : CommandExecutor {
         val residents: Collection<Resident> = town.residents
         if (TownService.get().unregister(town)) {
             for (townResident: Resident in residents) {
-                val townPlayer: Player = resident.player ?: continue
+                val townPlayer: Player = resident.player.orElse(null) ?: continue
 
                 townPlayer.sendMessage(Text.of("Your town has been disbanded."))
             }

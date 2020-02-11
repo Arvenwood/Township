@@ -5,6 +5,9 @@ import arvenwood.towns.api.claim.ClaimService
 import arvenwood.towns.api.resident.Resident
 import arvenwood.towns.api.town.Town
 import arvenwood.towns.api.town.TownService
+import arvenwood.towns.plugin.event.town.CreateTownEventImpl
+import arvenwood.towns.plugin.event.town.DeleteTownEventImpl
+import org.spongepowered.api.Sponge
 import java.util.*
 
 class SimpleTownService : TownService {
@@ -12,17 +15,23 @@ class SimpleTownService : TownService {
     private val townsById = HashMap<UUID, Town>()
     private val townsByName = HashMap<String, Town>()
 
-    override val towns: Collection<Town>
-        get() = this.townsById.values.toSet()
+    override fun getTowns(): Collection<Town> =
+        this.townsById.values.toSet()
 
-    override fun getTown(uniqueId: UUID): Town? =
-        this.townsById[uniqueId]
+    override fun getTown(uniqueId: UUID): Optional<Town> =
+        Optional.ofNullable(this.townsById[uniqueId])
 
-    override fun getTown(name: String): Town? =
-        this.townsByName[name]
+    override fun getTown(name: String): Optional<Town> =
+        Optional.ofNullable(this.townsByName[name])
 
     override fun register(town: Town): Boolean {
         if (town.uniqueId in this.townsById) {
+            return false
+        }
+
+        val event = CreateTownEventImpl(town, Sponge.getCauseStackManager().currentCause)
+        Sponge.getEventManager().post(event)
+        if (event.isCancelled) {
             return false
         }
 
@@ -33,6 +42,12 @@ class SimpleTownService : TownService {
 
     override fun unregister(town: Town): Boolean {
         if (town.uniqueId !in this.townsById) {
+            return false
+        }
+
+        val event = DeleteTownEventImpl(town, Sponge.getCauseStackManager().currentCause)
+        Sponge.getEventManager().post(event)
+        if (event.isCancelled) {
             return false
         }
 

@@ -5,8 +5,10 @@ plugins {
     id("com.github.johnrengelman.shadow") version "4.0.4"
 }
 
-group = "pw.dotdash"
-version = "0.1.0-SNAPSHOT"
+allprojects {
+    group = "pw.dotdash"
+    version = "0.2.0"
+}
 
 repositories {
     mavenCentral()
@@ -17,8 +19,12 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
 
+    implementation(project(":arven-towns-api"))
+
     runtime(kotlin("stdlib-jdk8"))
     runtime(kotlin("reflect"))
+
+    runtime(project(":arven-towns-api"))
 
     compileOnly("org.spongepowered:spongeapi:7.1.0")
     kapt("org.spongepowered:spongeapi:7.1.0")
