@@ -45,6 +45,13 @@ tasks {
     }
     shadowJar {
         archiveClassifier.set("dist")
+
+        relocate("kotlin", "arvenwood.towns.plugin.lib.kotlin")
+        relocate("org.jetbrains", "arvenwood.towns.plugin.lib.jetbrains")
+
+        minimize {
+            exclude(project(":arven-towns-api"))
+        }
     }
 }
 
