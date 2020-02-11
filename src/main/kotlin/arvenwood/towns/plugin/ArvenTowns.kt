@@ -20,7 +20,7 @@ import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.game.state.GameInitializationEvent
 import org.spongepowered.api.plugin.Plugin
 
-@Plugin(id = "arven-towns", name = "ArvenTowns", version = "0.1.0")
+@Plugin(id = "arven-towns", name = "ArvenTowns", version = "0.2.0")
 class ArvenTowns @Inject constructor(private val logger: Logger) {
 
     @Listener
