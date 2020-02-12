@@ -8,6 +8,8 @@ import arvenwood.towns.api.town.Town
 import arvenwood.towns.plugin.event.town.ChangeTownEventImpl
 import arvenwood.towns.plugin.util.tryPost
 import org.spongepowered.api.Sponge
+import org.spongepowered.api.service.economy.EconomyService
+import org.spongepowered.api.service.economy.account.Account
 import org.spongepowered.api.text.Text
 import org.spongepowered.api.text.channel.MessageChannel
 import java.util.*
@@ -105,6 +107,10 @@ data class TownImpl(
         InviteService.get().register(invite)
         return invite
     }
+
+    override fun getAccount(): Optional<Account> =
+        Sponge.getServiceManager().provide(EconomyService::class.java)
+            .flatMap { it.getOrCreateAccount("town-$uniqueId") }
 
     override fun sendMessage(message: Text) {
         this.messageChannel.send(message)
