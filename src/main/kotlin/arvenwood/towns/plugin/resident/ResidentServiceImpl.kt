@@ -6,10 +6,15 @@ import org.spongepowered.api.entity.living.player.Player
 import java.util.*
 import kotlin.collections.HashMap
 
-class SimpleResidentService : ResidentService {
+class ResidentServiceImpl : ResidentService {
 
     private val residentsById = HashMap<UUID, Resident>()
     private val residentsByName = HashMap<String, Resident>()
+
+    private val systemResident = ResidentImpl(UUID(0, 0), "TOWNS-SYS", null)
+
+    override fun getSystemResident(): Resident =
+        this.systemResident
 
     override fun getResidents(): Collection<Resident> =
         this.residentsById.values.toSet()
@@ -23,7 +28,7 @@ class SimpleResidentService : ResidentService {
     override fun getOrCreateResident(player: Player): Resident {
         this.getResident(player.uniqueId).orElse(null)?.let { return it }
 
-        val resident = SimpleResident(
+        val resident = ResidentImpl(
             uniqueId = player.uniqueId,
             name = player.name,
             town = null

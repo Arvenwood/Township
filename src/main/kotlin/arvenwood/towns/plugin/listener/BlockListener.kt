@@ -36,7 +36,7 @@ class BlockListener {
 
             if (resident.town != claim.town) {
                 event.isCancelled = true
-                player.sendMessage(Text.of(RED, "That chunk is owned by ${claim.town.name}"))
+                player.sendMessage(Text.of(RED, "That chunk is owned by the town ${claim.town.name}"))
                 return
             }
         }

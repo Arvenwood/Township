@@ -39,6 +39,19 @@ abstract class ChangeTownEventImpl(
         }
     }
 
+    class Open(
+        private var open: Boolean,
+        town: Town,
+        cause: Cause
+    ) : ChangeTownEventImpl(town, cause), ChangeTownEvent.Open {
+
+        override fun isOpen(): Boolean = this.open
+
+        override fun setOpen(open: Boolean) {
+            this.open = open
+        }
+    }
+
     class Owner(
         private val oldOwner: Resident,
         private var newOwner: Resident,

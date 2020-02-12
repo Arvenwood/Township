@@ -4,12 +4,13 @@ import arvenwood.towns.api.town.Town;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.text.channel.MessageReceiver;
 import org.spongepowered.api.util.Identifiable;
 
 import java.util.Optional;
 import java.util.UUID;
 
-public interface Resident extends Identifiable {
+public interface Resident extends Identifiable, MessageReceiver {
 
     @Override
     UUID getUniqueId();
@@ -18,7 +19,7 @@ public interface Resident extends Identifiable {
 
     Optional<Town> getTown();
 
-    void setTown(@Nullable Town town);
+    boolean setTown(@Nullable Town town);
 
     default boolean isOwner() {
         return this.getTown().filter(town -> town.getOwner().equals(this)).isPresent();

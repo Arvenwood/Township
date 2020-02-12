@@ -1,20 +1,25 @@
 package arvenwood.towns.plugin.town
 
-import arvenwood.towns.api.claim.Claim
-import arvenwood.towns.api.claim.ClaimService
+import arvenwood.towns.api.event.town.ChangeTownEvent
+import arvenwood.towns.api.invite.Invite
+import arvenwood.towns.api.invite.InviteService
 import arvenwood.towns.api.resident.Resident
 import arvenwood.towns.api.town.Town
 import arvenwood.towns.plugin.event.town.ChangeTownEventImpl
+import arvenwood.towns.plugin.util.tryPost
 import org.spongepowered.api.Sponge
-import org.spongepowered.api.world.Location
-import org.spongepowered.api.world.World
+import org.spongepowered.api.text.Text
+import org.spongepowered.api.text.channel.MessageChannel
 import java.util.*
 
-data class SimpleTown(
+data class TownImpl(
     private val uniqueId: UUID,
     private var name: String,
+    private var open: Boolean,
     private var owner: Resident
 ) : Town {
+
+    private var messageChannel: MessageChannel = TownMessageChannel(this)
 
     private val residents = HashSet<Resident>()
 
@@ -25,24 +30,36 @@ data class SimpleTown(
         this.name
 
     override fun setName(name: String) {
-        val event = ChangeTownEventImpl.Name(this.name, name, this, Sponge.getCauseStackManager().currentCause)
-        Sponge.getEventManager().post(event)
-        if (event.isCancelled) {
-            return
-        }
+        if (this.name == name) return
+
+        val event: ChangeTownEvent.Name = Sponge.getEventManager()
+            .tryPost(ChangeTownEventImpl.Name(this.name, name, this, Sponge.getCauseStackManager().currentCause))
+            ?: return
 
         this.name = event.newName
+    }
+
+    override fun isOpen(): Boolean = this.open
+
+    override fun setOpen(open: Boolean) {
+        if (this.open == open) return
+
+        Sponge.getEventManager()
+            .tryPost(ChangeTownEventImpl.Open(open, this, Sponge.getCauseStackManager().currentCause))
+            ?: return
+
+        this.open = open
     }
 
     override fun getOwner(): Resident =
         this.owner
 
     override fun setOwner(resident: Resident) {
-        val event = ChangeTownEventImpl.Owner(this.owner, resident, this, Sponge.getCauseStackManager().currentCause)
-        Sponge.getEventManager().post(event)
-        if (event.isCancelled) {
-            return
-        }
+        if (this.owner == resident) return
+
+        val event: ChangeTownEvent.Owner = Sponge.getEventManager()
+            .tryPost(ChangeTownEventImpl.Owner(this.owner, resident, this, Sponge.getCauseStackManager().currentCause))
+            ?: return
 
         this.owner = event.newOwner
     }
@@ -55,11 +72,9 @@ data class SimpleTown(
             return false
         }
 
-        val event = ChangeTownEventImpl.Join(resident, this, Sponge.getCauseStackManager().currentCause)
-        Sponge.getEventManager().post(event)
-        if (event.isCancelled) {
-            return false
-        }
+        Sponge.getEventManager()
+            .tryPost(ChangeTownEventImpl.Join(resident, this, Sponge.getCauseStackManager().currentCause))
+            ?: return false
 
         this.residents += resident
         resident.setTown(this)
@@ -71,28 +86,51 @@ data class SimpleTown(
             return false
         }
 
-        val event = ChangeTownEventImpl.Leave(resident, this, Sponge.getCauseStackManager().currentCause)
-        Sponge.getEventManager().post(event)
-        if (event.isCancelled) {
-            return false
-        }
+        Sponge.getEventManager()
+            .tryPost(ChangeTownEventImpl.Leave(resident, this, Sponge.getCauseStackManager().currentCause))
+            ?: return false
 
         this.residents -= resident
         resident.setTown(null)
         return true
     }
 
-    override fun getClaimAt(location: Location<World>): Optional<Claim> =
-        ClaimService.get().getClaimAt(location).filter { it.town == this }
+    override fun inviteResident(sender: Resident, receiver: Resident): Invite {
+        val invite: Invite = Invite.builder()
+            .sender(sender)
+            .receiver(receiver)
+            .town(this)
+            .build()
+
+        InviteService.get().register(invite)
+        return invite
+    }
+
+    override fun sendMessage(message: Text) {
+        this.messageChannel.send(message)
+    }
+
+    override fun setMessageChannel(channel: MessageChannel) {
+        this.messageChannel = channel
+    }
+
+    override fun getMessageChannel(): MessageChannel =
+        this.messageChannel
 
     class Builder : Town.Builder {
 
         private var name: String? = null
+        private var open: Boolean = false
         private var owner: Resident? = null
         private var residents: Set<Resident>? = null
 
         override fun name(name: String): Town.Builder {
             this.name = name
+            return this
+        }
+
+        override fun open(open: Boolean): Town.Builder {
+            this.open = open
             return this
         }
 
@@ -113,6 +151,7 @@ data class SimpleTown(
 
         override fun from(value: Town): Town.Builder {
             this.name = value.name
+            this.open = value.isOpen
             this.owner = value.owner
             this.residents = value.residents.toSet()
             return this
@@ -120,6 +159,7 @@ data class SimpleTown(
 
         override fun reset(): Town.Builder {
             this.name = null
+            this.open = false
             this.owner = null
             this.residents = null
             return this
@@ -129,9 +169,11 @@ data class SimpleTown(
             val residents: Set<Resident>? = this.residents
             val owner: Resident = checkNotNull(this.owner)
 
-            val town: Town = SimpleTown(
-                UUID.randomUUID(), checkNotNull(this.name),
-                owner
+            val town: Town = TownImpl(
+                uniqueId = UUID.randomUUID(),
+                name = checkNotNull(this.name),
+                open = this.open,
+                owner = owner
             )
 
             if (residents != null) {

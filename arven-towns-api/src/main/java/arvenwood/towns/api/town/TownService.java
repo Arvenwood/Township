@@ -18,6 +18,8 @@ public interface TownService {
 
     Optional<Town> getTown(String name);
 
+    boolean contains(Town town);
+
     boolean register(Town town);
 
     boolean unregister(Town town);

@@ -5,6 +5,7 @@ import arvenwood.towns.api.claim.ClaimService
 import arvenwood.towns.api.town.Town
 import arvenwood.towns.plugin.event.claim.CreateClaimEventImpl
 import arvenwood.towns.plugin.event.claim.DeleteClaimEventImpl
+import arvenwood.towns.plugin.util.tryPost
 import com.flowpowered.math.vector.Vector3i
 import com.google.common.collect.Table
 import com.google.common.collect.Tables
@@ -14,7 +15,7 @@ import org.spongepowered.api.world.World
 import java.util.*
 import kotlin.collections.HashMap
 
-class SimpleClaimService : ClaimService {
+class ClaimServiceImpl : ClaimService {
 
     private val claimMap: Table<World, Vector3i, Claim> =
         Tables.newCustomTable(HashMap()) { HashMap<Vector3i, Claim>() }
@@ -28,16 +29,16 @@ class SimpleClaimService : ClaimService {
     override fun getClaimsFor(town: Town): Collection<Claim> =
         this.claimMap.values().filter { it.town == town }
 
+    override fun contains(claim: Claim): Boolean =
+        this.claimMap.contains(claim.world, claim.chunkPosition)
+
     override fun register(claim: Claim): Boolean {
         if (claim.chunkPosition in this.claimMap.row(claim.world)) {
             return false
         }
 
-        val event = CreateClaimEventImpl(claim, Sponge.getCauseStackManager().currentCause)
-        Sponge.getEventManager().post(event)
-        if (event.isCancelled) {
-            return false
-        }
+        Sponge.getEventManager().tryPost(CreateClaimEventImpl(claim, Sponge.getCauseStackManager().currentCause))
+            ?: return false
 
         this.claimMap.put(claim.world, claim.chunkPosition, claim)
         return true
@@ -48,11 +49,8 @@ class SimpleClaimService : ClaimService {
             return false
         }
 
-        val event = DeleteClaimEventImpl(claim, Sponge.getCauseStackManager().currentCause)
-        Sponge.getEventManager().post(event)
-        if (event.isCancelled) {
-            return false
-        }
+        Sponge.getEventManager().tryPost(DeleteClaimEventImpl(claim, Sponge.getCauseStackManager().currentCause))
+            ?: return false
 
         this.claimMap.remove(claim.world, claim.chunkPosition)
         return true

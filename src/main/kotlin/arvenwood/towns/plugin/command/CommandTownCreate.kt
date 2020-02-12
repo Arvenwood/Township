@@ -30,7 +30,7 @@ object CommandTownCreate : CommandExecutor {
 
         val name: String = args.requireOne("name")
 
-        if (!name.matches(nameRegex)) {
+        if (!name.matches(this.nameRegex)) {
             throw CommandException(Text.of("Town name must be alphanumeric and from 2 to 32 characters."))
         }
 

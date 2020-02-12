@@ -2,7 +2,9 @@ package arvenwood.towns.plugin.command
 
 import arvenwood.towns.api.resident.ResidentService
 import arvenwood.towns.api.town.Town
+import arvenwood.towns.plugin.command.element.optional
 import arvenwood.towns.plugin.command.element.town
+import arvenwood.towns.plugin.util.text
 import org.spongepowered.api.command.CommandException
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
@@ -18,7 +20,7 @@ object CommandTownInfo : CommandExecutor {
 
     val SPEC: CommandSpec = CommandSpec.builder()
         .permission("arven.towns.town.info.base")
-        .arguments(optional(town(Text.of("town"))))
+        .arguments(town(Text.of("town")).optional())
         .executor(this)
         .build()
 
@@ -27,10 +29,23 @@ object CommandTownInfo : CommandExecutor {
             ?: (src as? Player)?.let { ResidentService.get().getOrCreateResident(src).town.orElse(null) }
             ?: throw CommandException(Text.of("You must specify the town argument."))
 
-        val pagination: PaginationList = PaginationList.builder()
-            .title(Text.of("Town: ${town.name}"))
-            .build()
+        val pagination: PaginationList = showTown(town)
+
+        pagination.sendTo(src)
 
         return CommandResult.success()
+    }
+
+    internal fun showTown(town: Town): PaginationList {
+        return PaginationList.builder()
+            .title("&2Town: &f${town.name}".text())
+            .padding("&6-".text())
+            .contents(
+                "&2Open: ${if (town.isOpen) "&aYes" else "&cNo"}".text(),
+                "&2Town Size: &a${town.claims.size}".text(),
+                "&2Owner: &a${town.owner.name}".text(),
+                "&2Residents &a[${town.residents.size}]&2: &f${town.residents.joinToString(limit = 15) { it.name }}".text()
+            )
+            .build()
     }
 }

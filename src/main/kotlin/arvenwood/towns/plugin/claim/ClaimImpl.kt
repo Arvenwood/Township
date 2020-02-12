@@ -5,7 +5,7 @@ import arvenwood.towns.api.town.Town
 import com.flowpowered.math.vector.Vector3i
 import org.spongepowered.api.world.World
 
-data class SimpleClaim(
+data class ClaimImpl(
     private val world: World,
     private val chunkPosition: Vector3i,
     private val town: Town
@@ -52,7 +52,7 @@ data class SimpleClaim(
             return this
         }
 
-        override fun build(): Claim = SimpleClaim(
+        override fun build(): Claim = ClaimImpl(
             world = checkNotNull(this.world),
             chunkPosition = checkNotNull(this.chunkPosition),
             town = checkNotNull(this.town)

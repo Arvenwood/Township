@@ -13,6 +13,8 @@ public interface ResidentService {
         return Sponge.getServiceManager().provideUnchecked(ResidentService.class);
     }
 
+    Resident getSystemResident();
+
     Collection<Resident> getResidents();
 
     Optional<Resident> getResident(UUID uniqueId);

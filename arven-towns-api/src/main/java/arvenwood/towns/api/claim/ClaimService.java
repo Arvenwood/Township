@@ -20,6 +20,8 @@ public interface ClaimService {
 
     Collection<Claim> getClaimsFor(Town town);
 
+    boolean contains(Claim claim);
+
     boolean register(Claim claim);
 
     boolean unregister(Claim claim);
