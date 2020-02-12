@@ -6,6 +6,7 @@ import arvenwood.towns.api.town.Town
 import arvenwood.towns.plugin.command.element.maybeOne
 import arvenwood.towns.plugin.command.element.optional
 import arvenwood.towns.plugin.command.element.town
+import arvenwood.towns.plugin.resident.getPlayerOrSystemResident
 import arvenwood.towns.plugin.util.text
 import org.spongepowered.api.command.CommandException
 import org.spongepowered.api.command.CommandResult
@@ -31,7 +32,7 @@ object CommandTownResidents : CommandExecutor {
 
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
         val town: Town = args.maybeOne("town")
-            ?: (src as? Player)?.let { ResidentService.get().getOrCreateResident(it).town.orElse(null) }
+            ?: src.getPlayerOrSystemResident().town.orElse(null)
             ?: throw CommandException(Text.of("You must specify the town argument."))
 
         val filter: Filter = args.requireOne("filter")

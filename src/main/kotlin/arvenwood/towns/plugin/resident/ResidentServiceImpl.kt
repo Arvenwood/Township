@@ -11,7 +11,7 @@ class ResidentServiceImpl : ResidentService {
     private val residentsById = HashMap<UUID, Resident>()
     private val residentsByName = HashMap<String, Resident>()
 
-    private val systemResident = ResidentImpl(UUID(0, 0), "TOWNS-SYS", null)
+    private val systemResident = ResidentImpl(UUID(0, 0), "T-BOT", null)
 
     override fun getSystemResident(): Resident =
         this.systemResident
