@@ -37,10 +37,12 @@ import org.spongepowered.api.data.persistence.DataFormats
 import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.game.state.*
 import org.spongepowered.api.plugin.Plugin
+import org.spongepowered.api.scheduler.Task
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 
-@Plugin(id = "arven-towns", name = "ArvenTowns", version = "0.4.0")
+@Plugin(id = "arven-towns", name = "ArvenTowns", version = "0.5.0")
 class ArvenTowns @Inject constructor(
     private val logger: Logger,
     @ConfigDir(sharedRoot = false) private val configDir: Path
@@ -53,6 +55,8 @@ class ArvenTowns @Inject constructor(
     private lateinit var residentService: ResidentServiceImpl
     private lateinit var townService: TownServiceImpl
     private lateinit var warpService: WarpServiceImpl
+
+    private var saveTask: Task? = null
 
     @Listener
     fun onPreInit(event: GamePreInitializationEvent) {
@@ -104,10 +108,22 @@ class ArvenTowns @Inject constructor(
     @Listener
     fun onStarted(event: GameStartedServerEvent) {
         this.loadPluginData()
+
+        Sponge.getScheduler().createTaskBuilder()
+            .interval(5, TimeUnit.MINUTES)
+            .execute { task: Task ->
+                this.saveTask = task
+                this.savePluginData()
+            }
+            .name("PeriodicSaveTask")
+            .submit(this)
     }
 
     @Listener
     fun onStopping(event: GameStoppingServerEvent) {
+        this.saveTask?.cancel()
+        this.saveTask = null
+
         this.savePluginData()
     }
 
