@@ -1,22 +1,38 @@
 package arvenwood.towns.api.claim;
 
 import arvenwood.towns.api.town.Town;
+import arvenwood.towns.api.town.TownService;
 import com.flowpowered.math.vector.Vector3i;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.DataSerializable;
 import org.spongepowered.api.util.ResettableBuilder;
 import org.spongepowered.api.world.World;
 
-public interface Claim {
+import java.util.UUID;
+
+public interface Claim extends DataSerializable {
 
     static Builder builder() {
         return Sponge.getRegistry().createBuilder(Builder.class);
     }
 
-    World getWorld();
+    UUID getWorldUniqueId();
+
+    default World getWorld() {
+        return Sponge.getServer()
+                .getWorld(this.getWorldUniqueId())
+                .orElseThrow(() -> new RuntimeException("World " + this.getWorldUniqueId() + " is not loaded"));
+    }
 
     Vector3i getChunkPosition();
 
-    Town getTown();
+    UUID getTownUniqueId();
+
+    default Town getTown() {
+        return TownService.getInstance()
+                .getTown(this.getTownUniqueId())
+                .orElseThrow(() -> new RuntimeException("Town " + this.getTownUniqueId() + " is not loaded"));
+    }
 
     interface Builder extends ResettableBuilder<Claim, Builder> {
 

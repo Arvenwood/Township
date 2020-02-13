@@ -8,7 +8,7 @@ import java.util.Collection;
 
 public interface InviteService {
 
-    static InviteService get() {
+    static InviteService getInstance() {
         return Sponge.getServiceManager().provideUnchecked(InviteService.class);
     }
 

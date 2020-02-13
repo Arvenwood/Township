@@ -4,7 +4,7 @@ import arvenwood.towns.api.resident.Resident
 import arvenwood.towns.api.resident.ResidentService
 import arvenwood.towns.api.town.Town
 import arvenwood.towns.plugin.command.element.*
-import arvenwood.towns.plugin.util.text
+import arvenwood.towns.plugin.util.ampersand
 import org.spongepowered.api.command.CommandException
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
@@ -37,11 +37,11 @@ object CommandTownJoin : CommandExecutor {
             throw CommandException(Text.of("You need an invite to join ${town.name}"))
         }
 
-        val resident: Resident = ResidentService.get().getOrCreateResident(player)
+        val resident: Resident = ResidentService.getInstance().getOrCreateResident(player)
 
         town.addResident(resident)
 
-        town.sendMessage("&f${resident.name}&b has joined the town.".text())
+        town.sendMessage("&f${resident.name}&b has joined the town.".ampersand())
 
         return CommandResult.success()
     }

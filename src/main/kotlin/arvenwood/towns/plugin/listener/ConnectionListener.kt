@@ -8,7 +8,7 @@ class ConnectionListener {
 
     @Listener
     fun onJoin(event: ClientConnectionEvent.Join) {
-        ResidentService.get().getOrCreateResident(event.targetEntity)
+        ResidentService.getInstance().getOrCreateResident(event.targetEntity)
     }
 
     @Listener

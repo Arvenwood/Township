@@ -4,7 +4,10 @@ import arvenwood.towns.api.claim.Claim;
 import arvenwood.towns.api.claim.ClaimService;
 import arvenwood.towns.api.invite.Invite;
 import arvenwood.towns.api.resident.Resident;
+import arvenwood.towns.api.warp.Warp;
+import arvenwood.towns.api.warp.WarpService;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.data.DataSerializable;
 import org.spongepowered.api.service.economy.Currency;
 import org.spongepowered.api.service.economy.EconomyService;
 import org.spongepowered.api.service.economy.account.Account;
@@ -18,7 +21,7 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Optional;
 
-public interface Town extends Identifiable, MessageReceiver {
+public interface Town extends Identifiable, MessageReceiver, DataSerializable {
 
     static Builder builder() {
         return Sponge.getRegistry().createBuilder(Builder.class);
@@ -45,12 +48,16 @@ public interface Town extends Identifiable, MessageReceiver {
     Invite inviteResident(Resident sender, Resident receiver);
 
     default Collection<Claim> getClaims() {
-        return ClaimService.get().getClaimsFor(this);
+        return ClaimService.getInstance().getClaimsFor(this);
     }
 
     default Optional<Claim> getClaimAt(Location<World> location) {
-        return ClaimService.get().getClaimAt(location)
+        return ClaimService.getInstance().getClaimAt(location)
                 .filter(claim -> claim.getTown().equals(this));
+    }
+
+    default Collection<Warp> getWarps() {
+        return WarpService.getInstance().getWarpsByTown(this);
     }
 
     Optional<Account> getAccount();

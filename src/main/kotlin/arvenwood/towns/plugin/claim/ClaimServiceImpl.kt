@@ -5,6 +5,8 @@ import arvenwood.towns.api.claim.ClaimService
 import arvenwood.towns.api.town.Town
 import arvenwood.towns.plugin.event.claim.CreateClaimEventImpl
 import arvenwood.towns.plugin.event.claim.DeleteClaimEventImpl
+import arvenwood.towns.plugin.storage.DataLoader
+import arvenwood.towns.plugin.storage.StorageBackedService
 import arvenwood.towns.plugin.util.tryPost
 import com.flowpowered.math.vector.Vector3i
 import com.google.common.collect.Table
@@ -15,7 +17,7 @@ import org.spongepowered.api.world.World
 import java.util.*
 import kotlin.collections.HashMap
 
-class ClaimServiceImpl : ClaimService {
+class ClaimServiceImpl : ClaimService, StorageBackedService {
 
     private val claimMap: Table<World, Vector3i, Claim> =
         Tables.newCustomTable(HashMap()) { HashMap<Vector3i, Claim>() }
@@ -54,5 +56,17 @@ class ClaimServiceImpl : ClaimService {
 
         this.claimMap.remove(claim.world, claim.chunkPosition)
         return true
+    }
+
+    override fun load(dataLoader: DataLoader) {
+        this.claimMap.clear()
+
+        for (claim: Claim in dataLoader.loadClaims()) {
+            this.claimMap.put(claim.world, claim.chunkPosition, claim)
+        }
+    }
+
+    override fun save(dataLoader: DataLoader) {
+        dataLoader.saveClaims(this.claimMap.values())
     }
 }

@@ -37,7 +37,7 @@ object CommandTownCreate : CommandExecutor {
             throw CommandException(Text.of("Town name must be alphanumeric and from 2 to 32 characters."))
         }
 
-        if (TownService.get().getTown(name).isPresent) {
+        if (TownService.getInstance().getTown(name).isPresent) {
             throw CommandException(Text.of("The town '$name' already exists!"))
         }
 
@@ -46,7 +46,7 @@ object CommandTownCreate : CommandExecutor {
             .owner(resident)
             .build()
 
-        if (TownService.get().register(town)) {
+        if (TownService.getInstance().register(town)) {
             Sponge.getServer().broadcastChannel.send(Text.of("The town of ${town.name} has been founded by ${src.name}."))
         } else {
             throw CommandException(Text.of("Failed to create the town. Please retry."))

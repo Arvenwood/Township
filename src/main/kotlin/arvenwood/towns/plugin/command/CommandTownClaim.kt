@@ -25,12 +25,12 @@ object CommandTownClaim : CommandExecutor {
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
         if (src !is Player) throw CommandException(Text.of("You must be a player to use that command."))
 
-        val resident: Resident = ResidentService.get().getOrCreateResident(src)
+        val resident: Resident = ResidentService.getInstance().getOrCreateResident(src)
 
         val town: Town = resident.town.orElse(null)
             ?: throw CommandException(Text.of("You must be in a town to use that command."))
 
-        ClaimService.get().getClaimAt(src.location).orElse(null)?.let {
+        ClaimService.getInstance().getClaimAt(src.location).orElse(null)?.let {
             throw CommandException(Text.of("This chunk has already been claimed by ${it.town.name}."))
         }
 
@@ -40,7 +40,7 @@ object CommandTownClaim : CommandExecutor {
             .town(town)
             .build()
 
-        ClaimService.get().register(claim)
+        ClaimService.getInstance().register(claim)
         src.sendMessage(Text.of(GREEN, "Claimed the chunk at ${claim.chunkPosition}"))
 
         return CommandResult.success()

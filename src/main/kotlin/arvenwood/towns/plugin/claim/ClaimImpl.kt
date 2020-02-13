@@ -2,20 +2,34 @@ package arvenwood.towns.plugin.claim
 
 import arvenwood.towns.api.claim.Claim
 import arvenwood.towns.api.town.Town
+import arvenwood.towns.plugin.storage.DataQueries
 import com.flowpowered.math.vector.Vector3i
+import org.spongepowered.api.data.DataContainer
+import org.spongepowered.api.data.DataQuery
 import org.spongepowered.api.world.World
+import java.util.*
 
 data class ClaimImpl(
-    private val world: World,
+    private val worldUniqueId: UUID,
     private val chunkPosition: Vector3i,
-    private val town: Town
+    private val townUniqueId: UUID
 ) : Claim {
 
-    override fun getWorld(): World = this.world
+    override fun getWorldUniqueId(): UUID = this.worldUniqueId
 
     override fun getChunkPosition(): Vector3i = this.chunkPosition
 
-    override fun getTown(): Town = this.town
+    override fun getTownUniqueId(): UUID = this.townUniqueId
+
+    override fun getContentVersion(): Int = 1
+
+    override fun toContainer(): DataContainer =
+        DataContainer.createNew()
+            .set(DataQueries.WORLD_UNIQUE_ID, this.worldUniqueId.toString())
+            .set(DataQueries.CHUNK_POSITION_X, this.chunkPosition.x)
+            .set(DataQueries.CHUNK_POSITION_Y, this.chunkPosition.y)
+            .set(DataQueries.CHUNK_POSITION_Z, this.chunkPosition.z)
+            .set(DataQueries.TOWN_UNIQUE_ID, this.townUniqueId.toString())
 
     class Builder : Claim.Builder {
 
@@ -53,9 +67,9 @@ data class ClaimImpl(
         }
 
         override fun build(): Claim = ClaimImpl(
-            world = checkNotNull(this.world),
+            worldUniqueId = checkNotNull(this.world).uniqueId,
             chunkPosition = checkNotNull(this.chunkPosition),
-            town = checkNotNull(this.town)
+            townUniqueId = checkNotNull(this.town).uniqueId
         )
     }
 }

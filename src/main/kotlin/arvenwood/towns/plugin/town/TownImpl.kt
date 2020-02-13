@@ -6,8 +6,10 @@ import arvenwood.towns.api.invite.InviteService
 import arvenwood.towns.api.resident.Resident
 import arvenwood.towns.api.town.Town
 import arvenwood.towns.plugin.event.town.ChangeTownEventImpl
+import arvenwood.towns.plugin.storage.DataQueries
 import arvenwood.towns.plugin.util.tryPost
 import org.spongepowered.api.Sponge
+import org.spongepowered.api.data.DataContainer
 import org.spongepowered.api.service.economy.EconomyService
 import org.spongepowered.api.service.economy.account.Account
 import org.spongepowered.api.text.Text
@@ -24,6 +26,10 @@ data class TownImpl(
     private var messageChannel: MessageChannel = TownMessageChannel(this)
 
     private val residents = HashSet<Resident>()
+
+    internal fun loadResident(resident: Resident) {
+        this.residents += resident
+    }
 
     override fun getUniqueId(): UUID =
         this.uniqueId
@@ -104,7 +110,7 @@ data class TownImpl(
             .town(this)
             .build()
 
-        InviteService.get().register(invite)
+        InviteService.getInstance().register(invite)
         return invite
     }
 
@@ -122,6 +128,16 @@ data class TownImpl(
 
     override fun getMessageChannel(): MessageChannel =
         this.messageChannel
+
+    override fun getContentVersion(): Int = 1
+
+    override fun toContainer(): DataContainer =
+        DataContainer.createNew()
+            .set(DataQueries.UNIQUE_ID, this.uniqueId.toString())
+            .set(DataQueries.NAME, this.name)
+            .set(DataQueries.OPEN, this.open)
+            .set(DataQueries.OWNER_UNIQUE_ID, this.owner.uniqueId.toString())
+            .set(DataQueries.RESIDENT_UNIQUE_IDS, this.residents.map { it.uniqueId.toString() })
 
     class Builder : Town.Builder {
 

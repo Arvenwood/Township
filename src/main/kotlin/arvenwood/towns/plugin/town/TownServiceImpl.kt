@@ -7,11 +7,13 @@ import arvenwood.towns.api.town.Town
 import arvenwood.towns.api.town.TownService
 import arvenwood.towns.plugin.event.town.CreateTownEventImpl
 import arvenwood.towns.plugin.event.town.DeleteTownEventImpl
+import arvenwood.towns.plugin.storage.DataLoader
+import arvenwood.towns.plugin.storage.StorageBackedService
 import arvenwood.towns.plugin.util.tryPost
 import org.spongepowered.api.Sponge
 import java.util.*
 
-class TownServiceImpl : TownService {
+class TownServiceImpl : TownService, StorageBackedService {
 
     private val townsById = HashMap<UUID, Town>()
     private val townsByName = HashMap<String, Town>()
@@ -57,9 +59,23 @@ class TownServiceImpl : TownService {
         }
 
         for (claim: Claim in town.claims) {
-            ClaimService.get().unregister(claim)
+            ClaimService.getInstance().unregister(claim)
         }
 
         return true
+    }
+
+    override fun load(dataLoader: DataLoader) {
+        this.townsById.clear()
+        this.townsByName.clear()
+
+        for (town: Town in dataLoader.loadTowns()) {
+            this.townsById[town.uniqueId] = town
+            this.townsByName[town.name] = town
+        }
+    }
+
+    override fun save(dataLoader: DataLoader) {
+        dataLoader.saveTowns(this.townsById.values)
     }
 }

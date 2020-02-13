@@ -33,7 +33,7 @@ object CommandTownLeave : CommandExecutor {
             ?: src as? Player
             ?: throw CommandException(Text.of("You must specify the player argument."))
 
-        val resident: Resident = ResidentService.get().getOrCreateResident(player)
+        val resident: Resident = ResidentService.getInstance().getOrCreateResident(player)
 
         val town: Town = resident.town.orElse(null)
             ?: throw CommandException(Text.of("You must be in a town to use that command."))

@@ -30,7 +30,7 @@ object CommandTownHere : CommandExecutor {
             ?: src as? Player
             ?: throw CommandException(Text.of("You must specify the player argument."))
 
-        val claim: Claim = ClaimService.get().getClaimAt(player.location).orElse(null)
+        val claim: Claim = ClaimService.getInstance().getClaimAt(player.location).orElse(null)
             ?: throw CommandException(Text.of("No town has claimed this chunk."))
 
         CommandTownInfo.showTown(claim.town).sendTo(src)

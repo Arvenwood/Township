@@ -9,6 +9,6 @@ import org.spongepowered.api.text.Text
 fun resident(key: Text): CommandElement =
     GenericArguments.choices(
         key,
-        { ResidentService.get().residents.map(Resident::getName) },
-        { ResidentService.get().getResident(it) }
+        { ResidentService.getInstance().residents.map(Resident::getName) },
+        { ResidentService.getInstance().getResident(it) }
     )

@@ -25,19 +25,19 @@ object CommandTownUnclaim : CommandExecutor {
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
         if (src !is Player) throw CommandException(Text.of("You must be a player to use that command."))
 
-        val resident: Resident = ResidentService.get().getOrCreateResident(src)
+        val resident: Resident = ResidentService.getInstance().getOrCreateResident(src)
 
         val town: Town = resident.town.orElse(null)
             ?: throw CommandException(Text.of("You must be in a town to use that command."))
 
-        val claim: Claim = ClaimService.get().getClaimAt(src.location).orElse(null)
+        val claim: Claim = ClaimService.getInstance().getClaimAt(src.location).orElse(null)
             ?: throw CommandException(Text.of("This chunk has not been claimed."))
 
         if (claim.town != town) {
             throw CommandException(Text.of("Your town does not own this chunk."))
         }
 
-        ClaimService.get().unregister(claim)
+        ClaimService.getInstance().unregister(claim)
         src.sendMessage(Text.of(GREEN, "Unclaimed the chunk at ${claim.chunkPosition}"))
 
         return CommandResult.success()

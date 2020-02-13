@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public interface TownService {
 
-    static TownService get() {
+    static TownService getInstance() {
         return Sponge.getServiceManager().provideUnchecked(TownService.class);
     }
 

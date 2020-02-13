@@ -24,7 +24,7 @@ object CommandTownList : CommandExecutor {
 
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
         val sortBy: SortBy = args.requireOne("sortBy")
-        val towns: Collection<Town> = TownService.get().towns.sortedWith(sortBy.comparator)
+        val towns: Collection<Town> = TownService.getInstance().towns.sortedWith(sortBy.comparator)
 
         val pagination: PaginationList = PaginationList.builder()
             .title(Text.of(YELLOW, "Towns"))

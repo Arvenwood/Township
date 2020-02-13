@@ -29,11 +29,11 @@ class BlockListener {
     }
 
     private fun checkProtection(event: ChangeBlockEvent, player: Player) {
-        val resident: Resident = ResidentService.get().getResident(player.uniqueId).orElse(null) ?: return
+        val resident: Resident = ResidentService.getInstance().getResident(player.uniqueId).orElse(null) ?: return
 
         for (transaction: Transaction<BlockSnapshot> in event.transactions) {
             val location: Location<World> = transaction.original.location.orElse(null) ?: continue
-            val claim: Claim = ClaimService.get().getClaimAt(location).orElse(null) ?: continue
+            val claim: Claim = ClaimService.getInstance().getClaimAt(location).orElse(null) ?: continue
 
             if (claim.town != resident.town) {
                 event.isCancelled = true
@@ -45,8 +45,8 @@ class BlockListener {
 
     @Listener
     fun onChangeSign(event: ChangeSignEvent, @Root player: Player) {
-        val resident: Resident = ResidentService.get().getResident(player.uniqueId).orElse(null) ?: return
-        val claim: Claim = ClaimService.get().getClaimAt(event.targetTile.location).orElse(null) ?: return
+        val resident: Resident = ResidentService.getInstance().getResident(player.uniqueId).orElse(null) ?: return
+        val claim: Claim = ClaimService.getInstance().getClaimAt(event.targetTile.location).orElse(null) ?: return
 
         if (claim.town != resident.town) {
             event.isCancelled = true

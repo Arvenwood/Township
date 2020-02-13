@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public interface ResidentService {
 
-    static ResidentService get() {
+    static ResidentService getInstance() {
         return Sponge.getServiceManager().provideUnchecked(ResidentService.class);
     }
 

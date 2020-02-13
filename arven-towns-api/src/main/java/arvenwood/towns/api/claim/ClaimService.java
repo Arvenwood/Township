@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public interface ClaimService {
 
-    static ClaimService get() {
+    static ClaimService getInstance() {
         return Sponge.getServiceManager().provideUnchecked(ClaimService.class);
     }
 

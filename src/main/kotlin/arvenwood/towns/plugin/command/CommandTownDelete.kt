@@ -48,7 +48,7 @@ object CommandTownDelete : CommandExecutor {
 
     private fun disband(town: Town, source: Resident) {
         val residents: Collection<Resident> = town.residents
-        if (TownService.get().unregister(town)) {
+        if (TownService.getInstance().unregister(town)) {
             for (townResident: Resident in residents) {
                 val townPlayer: Player = townResident.player.orElse(null) ?: continue
 
