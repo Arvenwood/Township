@@ -19,12 +19,12 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
 
-    implementation(project(":arven-towns-api"))
+    implementation(project(":township-api"))
 
     runtime(kotlin("stdlib-jdk8"))
     runtime(kotlin("reflect"))
 
-    runtime(project(":arven-towns-api"))
+    runtime(project(":township-api"))
 
     compileOnly("org.spongepowered:spongeapi:7.1.0")
     kapt("org.spongepowered:spongeapi:7.1.0")
@@ -46,11 +46,11 @@ tasks {
     shadowJar {
         archiveClassifier.set("dist")
 
-        relocate("kotlin", "arvenwood.towns.plugin.lib.kotlin")
-        relocate("org.jetbrains", "arvenwood.towns.plugin.lib.jetbrains")
+        relocate("kotlin", "pw.dotdash.township.plugin.lib.kotlin")
+        relocate("org.jetbrains", "pw.dotdash.township.plugin.lib.jetbrains")
 
         minimize {
-            exclude(project(":arven-towns-api"))
+            exclude(project(":township-api"))
         }
     }
 }

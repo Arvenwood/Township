@@ -1,2 +1,3 @@
-rootProject.name = "arven-towns"
-include("arven-towns-api")
+rootProject.name = "township"
+
+include("township-api")
