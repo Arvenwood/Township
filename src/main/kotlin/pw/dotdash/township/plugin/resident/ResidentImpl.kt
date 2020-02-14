@@ -106,6 +106,11 @@ data class ResidentImpl(
 
         when (permission) {
             is TownPermission -> {
+                if (claim.town.owner.uniqueId == this.uniqueId) {
+                    // Town owner can always do stuff in their town.
+                    return Tristate.TRUE
+                }
+
                 // Check for any roles with the permission.
                 for (role: Role in roles) {
                     if (role.hasPermission(permission)) {
@@ -116,6 +121,11 @@ data class ResidentImpl(
                 return Tristate.UNDEFINED
             }
             is ClaimPermission -> {
+                if (claim.town.owner.uniqueId == this.uniqueId) {
+                    // Town owner can always do stuff in their town.
+                    return Tristate.TRUE
+                }
+
                 // Check for claim overrides for their roles first.
                 for (role: Role in roles) {
                     val override: Tristate = claim.getPermissionOverride(role, permission)
