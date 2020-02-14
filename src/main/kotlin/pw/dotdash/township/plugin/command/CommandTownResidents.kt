@@ -1,12 +1,5 @@
 package pw.dotdash.township.plugin.command
 
-import pw.dotdash.township.api.resident.Resident
-import pw.dotdash.township.api.town.Town
-import pw.dotdash.township.plugin.command.element.maybeOne
-import pw.dotdash.township.plugin.command.element.optional
-import pw.dotdash.township.plugin.command.element.town
-import pw.dotdash.township.plugin.resident.getPlayerOrSystemResident
-import pw.dotdash.township.plugin.util.ampersand
 import org.spongepowered.api.command.CommandException
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
@@ -14,8 +7,16 @@ import org.spongepowered.api.command.args.CommandContext
 import org.spongepowered.api.command.args.GenericArguments.enumValue
 import org.spongepowered.api.command.spec.CommandExecutor
 import org.spongepowered.api.command.spec.CommandSpec
+import org.spongepowered.api.data.key.Keys
 import org.spongepowered.api.service.pagination.PaginationList
 import org.spongepowered.api.text.Text
+import pw.dotdash.township.api.resident.Resident
+import pw.dotdash.township.api.town.Town
+import pw.dotdash.township.plugin.command.element.maybeOne
+import pw.dotdash.township.plugin.command.element.optional
+import pw.dotdash.township.plugin.command.element.town
+import pw.dotdash.township.plugin.resident.getPlayerOrSystemResident
+import pw.dotdash.township.plugin.util.ampersand
 
 object CommandTownResidents : CommandExecutor {
 
@@ -56,6 +57,6 @@ object CommandTownResidents : CommandExecutor {
         /**
          * Filters for only residents that are currently online.
          */
-        ONLINE({ it.player.isPresent })
+        ONLINE({ it.player.filter { player -> !player.getOrElse(Keys.VANISH, false)}.isPresent })
     }
 }
