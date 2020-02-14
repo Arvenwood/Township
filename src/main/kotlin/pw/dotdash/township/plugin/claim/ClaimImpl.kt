@@ -65,9 +65,7 @@ data class ClaimImpl(
         return DataContainer.createNew()
             .set(Queries.CONTENT_VERSION, this.contentVersion)
             .set(DataQueries.WORLD_UNIQUE_ID, this.worldUniqueId)
-            .set(DataQueries.CHUNK_POSITION_X, this.chunkPosition.x)
-            .set(DataQueries.CHUNK_POSITION_Y, this.chunkPosition.y)
-            .set(DataQueries.CHUNK_POSITION_Z, this.chunkPosition.z)
+            .set(DataQueries.CHUNK_POSITION, this.chunkPosition)
             .set(DataQueries.TOWN_UNIQUE_ID, this.townUniqueId)
             .set(DataQueries.ROLE_PERMISSION_OVERRIDES, this.rolePermissionOverrides.toContainer())
     }
@@ -75,14 +73,11 @@ data class ClaimImpl(
     object DataBuilder : AbstractDataBuilder<Claim>(Claim::class.java, 1) {
         override fun buildContent(container: DataView): Optional<Claim> {
             val worldUniqueId: UUID = container.getUUID(DataQueries.WORLD_UNIQUE_ID).get()
-            val chunkPosition = Vector3i(
-                container.getInt(DataQueries.CHUNK_POSITION_X).get(),
-                container.getInt(DataQueries.CHUNK_POSITION_Y).get(),
-                container.getInt(DataQueries.CHUNK_POSITION_Z).get()
-            )
+            val chunkPosition = container.getObject(DataQueries.CHUNK_POSITION, Vector3i::class.java).get()
             val townUniqueId: UUID = container.getUUID(DataQueries.TOWN_UNIQUE_ID).get()
 
-            val rolePermissionOverrides: Table<UUID, ClaimPermission, Boolean> = container.getRolePermissionOverrides()
+            val rolePermissionOverrides: Table<UUID, ClaimPermission, Boolean> =
+                container.getRolePermissionOverrides(DataQueries.ROLE_PERMISSION_OVERRIDES).get()
 
             val claim = ClaimImpl(
                 worldUniqueId = worldUniqueId,
