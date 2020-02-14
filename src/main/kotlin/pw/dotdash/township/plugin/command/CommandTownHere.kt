@@ -14,6 +14,7 @@ import org.spongepowered.api.command.spec.CommandExecutor
 import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.text.Text
+import pw.dotdash.township.plugin.util.unwrap
 
 object CommandTownHere : CommandExecutor {
 
@@ -26,11 +27,11 @@ object CommandTownHere : CommandExecutor {
         .build()
 
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
-        val player: Player = args.getOne<Player>("player").orElse(null)
+        val player: Player = args.getOne<Player>("player").unwrap()
             ?: src as? Player
             ?: throw CommandException(Text.of("You must specify the player argument."))
 
-        val claim: Claim = ClaimService.getInstance().getClaimAt(player.location).orElse(null)
+        val claim: Claim = ClaimService.getInstance().getClaimAt(player.location).unwrap()
             ?: throw CommandException(Text.of("No town has claimed this chunk."))
 
         CommandTownInfo.showTown(claim.town).sendTo(src)

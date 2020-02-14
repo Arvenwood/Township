@@ -10,7 +10,6 @@ import pw.dotdash.township.api.town.Town
 import pw.dotdash.township.api.town.TownService
 import pw.dotdash.township.api.warp.Warp
 import pw.dotdash.township.api.warp.WarpService
-import pw.dotdash.township.plugin.claim.ClaimDataBuilder
 import pw.dotdash.township.plugin.claim.ClaimImpl
 import pw.dotdash.township.plugin.claim.ClaimServiceImpl
 import pw.dotdash.township.plugin.command.CommandTown
@@ -18,15 +17,12 @@ import pw.dotdash.township.plugin.invite.InviteImpl
 import pw.dotdash.township.plugin.invite.InviteServiceImpl
 import pw.dotdash.township.plugin.listener.BlockListener
 import pw.dotdash.township.plugin.listener.ConnectionListener
-import pw.dotdash.township.plugin.resident.ResidentDataBuilder
 import pw.dotdash.township.plugin.resident.ResidentServiceImpl
 import pw.dotdash.township.plugin.storage.DataLoader
 import pw.dotdash.township.plugin.storage.file.FileDataLoader
-import pw.dotdash.township.plugin.town.TownDataBuilder
 import pw.dotdash.township.plugin.town.TownImpl
 import pw.dotdash.township.plugin.town.TownServiceImpl
 import pw.dotdash.township.plugin.util.setProvider
-import pw.dotdash.township.plugin.warp.WarpDataBuilder
 import pw.dotdash.township.plugin.warp.WarpImpl
 import pw.dotdash.township.plugin.warp.WarpServiceImpl
 import com.google.inject.Inject
@@ -38,11 +34,28 @@ import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.game.state.*
 import org.spongepowered.api.plugin.Plugin
 import org.spongepowered.api.scheduler.Task
+import pw.dotdash.township.api.permission.ClaimPermission
+import pw.dotdash.township.api.permission.Permission
+import pw.dotdash.township.api.permission.TownPermission
+import pw.dotdash.township.api.role.TownRole
+import pw.dotdash.township.api.role.TownRoleService
+import pw.dotdash.township.plugin.permission.*
+import pw.dotdash.township.plugin.resident.ResidentImpl
+import pw.dotdash.township.plugin.role.TownRoleImpl
+import pw.dotdash.township.plugin.role.TownRoleServiceImpl
+import pw.dotdash.township.plugin.util.registerBuilder
+import pw.dotdash.township.plugin.util.registerBuilderSupplier
+import pw.dotdash.township.plugin.util.registerModule
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-@Plugin(id = "township", name = "Township", version = "0.5.0")
+@Plugin(
+    id = "township", name = "Township", version = "0.5.0",
+    description = "A minimalist towny plugin.",
+    url = "https://ore.spongepowered.org/doot/Township",
+    authors = ["doot"]
+)
 class Township @Inject constructor(
     private val logger: Logger,
     @ConfigDir(sharedRoot = false) private val configDir: Path
@@ -54,6 +67,7 @@ class Township @Inject constructor(
     private lateinit var inviteService: InviteServiceImpl
     private lateinit var residentService: ResidentServiceImpl
     private lateinit var townService: TownServiceImpl
+    private lateinit var townRoleService: TownRoleServiceImpl
     private lateinit var warpService: WarpServiceImpl
 
     private var saveTask: Task? = null
@@ -66,6 +80,7 @@ class Township @Inject constructor(
         this.inviteService = InviteServiceImpl()
         this.residentService = ResidentServiceImpl()
         this.townService = TownServiceImpl()
+        this.townRoleService = TownRoleServiceImpl()
         this.warpService = WarpServiceImpl()
     }
 
@@ -73,18 +88,34 @@ class Township @Inject constructor(
     fun onInit(event: GameInitializationEvent) {
         this.logger.info("Registering data builders...")
 
-        Sponge.getDataManager().registerBuilder(Claim::class.java, ClaimDataBuilder())
-        Sponge.getDataManager().registerBuilder(Resident::class.java, ResidentDataBuilder())
-        Sponge.getDataManager().registerBuilder(Town::class.java, TownDataBuilder())
-        Sponge.getDataManager().registerBuilder(Warp::class.java, WarpDataBuilder())
+        Sponge.getDataManager()
+            .registerBuilder<Claim>(ClaimImpl.DataBuilder)
+            .registerBuilder<Resident>(ResidentImpl.DataBuilder)
+            .registerBuilder<Town>(TownImpl.DataBuilder)
+            .registerBuilder<TownRole>(TownRoleImpl.DataBuilder)
+            .registerBuilder<Warp>(WarpImpl.DataBuilder)
 
         this.logger.info("Registering catalog builders...")
 
         Sponge.getRegistry()
-            .registerBuilderSupplier(Claim.Builder::class.java, ClaimImpl::Builder)
-            .registerBuilderSupplier(Invite.Builder::class.java, InviteImpl::Builder)
-            .registerBuilderSupplier(Town.Builder::class.java, TownImpl::Builder)
-            .registerBuilderSupplier(Warp.Builder::class.java, WarpImpl::Builder)
+            .registerBuilderSupplier<ClaimPermission.Builder>(ClaimPermissionImpl::Builder)
+            .registerBuilderSupplier<TownPermission.Builder>(TownPermissionImpl::Builder)
+            .registerBuilderSupplier<Claim.Builder>(ClaimImpl::Builder)
+            .registerBuilderSupplier<Invite.Builder>(InviteImpl::Builder)
+            .registerBuilderSupplier<Town.Builder>(TownImpl::Builder)
+            .registerBuilderSupplier<TownRole.Builder>(TownRoleImpl::Builder)
+            .registerBuilderSupplier<Warp.Builder>(WarpImpl::Builder)
+
+        this.logger.info("Registering catalog modules...")
+
+        val claimPermissions = ClaimPermissionRegistryModule()
+        val townPermissions = TownPermissionRegistryModule()
+        val permissions = PermissionRegistryModule(claimPermissions, townPermissions)
+
+        Sponge.getRegistry()
+            .registerModule<ClaimPermission>(claimPermissions)
+            .registerModule<TownPermission>(townPermissions)
+            .registerModule<Permission>(permissions)
 
         this.logger.info("Registering services...")
 
@@ -93,6 +124,7 @@ class Township @Inject constructor(
             .setProvider<InviteService>(this, this.inviteService)
             .setProvider<ResidentService>(this, this.residentService)
             .setProvider<TownService>(this, this.townService)
+            .setProvider<TownRoleService>(this, this.townRoleService)
             .setProvider<WarpService>(this, this.warpService)
 
         this.logger.info("Registering listeners...")
@@ -110,6 +142,7 @@ class Township @Inject constructor(
         this.loadPluginData()
 
         Sponge.getScheduler().createTaskBuilder()
+            .delay(5, TimeUnit.MINUTES)
             .interval(5, TimeUnit.MINUTES)
             .execute { task: Task ->
                 this.saveTask = task
@@ -129,37 +162,35 @@ class Township @Inject constructor(
 
     private fun loadPluginData() {
         this.logger.info("Loading residents...")
-
         this.residentService.load(this.dataLoader)
 
         this.logger.info("Loading towns...")
-
         this.townService.load(this.dataLoader)
 
-        this.logger.info("Loading claims...")
+        this.logger.info("Loading town roles...")
+        this.townRoleService.load(this.dataLoader)
 
+        this.logger.info("Loading claims...")
         this.claimService.load(this.dataLoader)
 
         this.logger.info("Loading warps...")
-
         this.warpService.load(this.dataLoader)
     }
 
     private fun savePluginData() {
         this.logger.info("Saving residents...")
-
         this.residentService.save(this.dataLoader)
 
         this.logger.info("Saving towns...")
-
         this.townService.save(this.dataLoader)
 
-        this.logger.info("Saving claims...")
+        this.logger.info("Saving town roles...")
+        this.townRoleService.save(this.dataLoader)
 
+        this.logger.info("Saving claims...")
         this.claimService.save(this.dataLoader)
 
         this.logger.info("Saving warps...")
-
         this.warpService.save(this.dataLoader)
     }
 }

@@ -3,6 +3,7 @@ package pw.dotdash.township.plugin.storage.`object`
 import org.spongepowered.api.Sponge
 import org.spongepowered.api.data.DataSerializable
 import org.spongepowered.api.data.DataView
+import pw.dotdash.township.plugin.util.unwrap
 
 data class DataViewObjectSerializer<T : DataSerializable>(val type: Class<T>) :
     ObjectSerializer<T, DataView, DataView> {
@@ -13,7 +14,7 @@ data class DataViewObjectSerializer<T : DataSerializable>(val type: Class<T>) :
     }
 
     override fun deserialize(input: DataView): T? =
-        Sponge.getDataManager().deserialize(this.type, input).orElse(null)
+        Sponge.getDataManager().deserialize(this.type, input).unwrap()
 
     override fun serialize(value: T): DataView =
         value.toContainer()

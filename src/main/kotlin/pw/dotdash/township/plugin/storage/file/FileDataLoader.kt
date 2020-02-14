@@ -13,6 +13,8 @@ import org.spongepowered.api.data.DataQuery
 import org.spongepowered.api.data.DataSerializable
 import org.spongepowered.api.data.DataView
 import org.spongepowered.api.data.persistence.DataFormat
+import pw.dotdash.township.api.role.Role
+import pw.dotdash.township.api.role.TownRole
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -20,23 +22,22 @@ data class FileDataLoader(val root: Path, val format: DataFormat) : DataLoader {
 
     private val pathClaims: Path = this.root.resolve("claims.dat")
     private val pathResidents: Path = this.root.resolve("residents.dat")
+    private val pathRoles: Path = this.root.resolve("roles.dat")
     private val pathTowns: Path = this.root.resolve("towns.dat")
     private val pathWarps: Path = this.root.resolve("warps.dat")
 
-    private val loaderClaims: ObjectLoader<DataView, DataView> =
-        FileDataViewObjectLoader(this.pathClaims, this.format)
-    private val loaderResidents: ObjectLoader<DataView, DataView> =
-        FileDataViewObjectLoader(this.pathResidents, this.format)
-    private val loaderTowns: ObjectLoader<DataView, DataView> =
-        FileDataViewObjectLoader(this.pathTowns, this.format)
-    private val loaderWarps: ObjectLoader<DataView, DataView> =
-        FileDataViewObjectLoader(this.pathWarps, this.format)
+    private val loaderClaims = FileDataViewObjectLoader(this.pathClaims, this.format)
+    private val loaderResidents = FileDataViewObjectLoader(this.pathResidents, this.format)
+    private val loaderRoles = FileDataViewObjectLoader(this.pathRoles, this.format)
+    private val loaderTowns = FileDataViewObjectLoader(this.pathTowns, this.format)
+    private val loaderWarps = FileDataViewObjectLoader(this.pathWarps, this.format)
 
     init {
         if (Files.notExists(this.root)) Files.createDirectories(this.root)
 
         if (Files.notExists(this.pathClaims)) Files.createFile(this.pathClaims)
         if (Files.notExists(this.pathResidents)) Files.createFile(this.pathResidents)
+        if (Files.notExists(this.pathRoles)) Files.createFile(this.pathRoles)
         if (Files.notExists(this.pathTowns)) Files.createFile(this.pathTowns)
         if (Files.notExists(this.pathWarps)) Files.createFile(this.pathWarps)
     }
@@ -52,6 +53,11 @@ data class FileDataLoader(val root: Path, val format: DataFormat) : DataLoader {
     }
 
     private fun <T : DataSerializable> saveValues(loader: ObjectLoader<DataView, DataView>, values: Collection<T>, query: DataQuery) {
+        if (values.isEmpty()) {
+            // Nothing to save.
+            return
+        }
+
         loader.save(DataContainer.createNew().set(query, values.map(DataSerializable::toContainer)))
     }
 
@@ -66,6 +72,12 @@ data class FileDataLoader(val root: Path, val format: DataFormat) : DataLoader {
 
     override fun saveResidents(residents: Collection<Resident>): Unit =
         this.saveValues(this.loaderResidents, residents, DataQueries.RESIDENTS)
+
+    override fun loadTownRoles(): Collection<TownRole> =
+        this.loadValues(this.loaderRoles, TownRole::class.java, DataQueries.ROLES)
+
+    override fun saveTownRoles(roles: Collection<TownRole>): Unit =
+        this.saveValues(this.loaderRoles, roles, DataQueries.ROLES)
 
     override fun loadTowns(): Collection<Town> =
         this.loadValues(this.loaderTowns, Town::class.java, DataQueries.TOWNS)

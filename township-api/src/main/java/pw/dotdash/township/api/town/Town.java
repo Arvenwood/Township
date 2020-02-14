@@ -1,11 +1,5 @@
 package pw.dotdash.township.api.town;
 
-import pw.dotdash.township.api.claim.Claim;
-import pw.dotdash.township.api.claim.ClaimService;
-import pw.dotdash.township.api.invite.Invite;
-import pw.dotdash.township.api.resident.Resident;
-import pw.dotdash.township.api.warp.Warp;
-import pw.dotdash.township.api.warp.WarpService;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.data.DataSerializable;
 import org.spongepowered.api.service.economy.Currency;
@@ -16,10 +10,20 @@ import org.spongepowered.api.util.Identifiable;
 import org.spongepowered.api.util.ResettableBuilder;
 import org.spongepowered.api.world.Location;
 import org.spongepowered.api.world.World;
+import pw.dotdash.township.api.claim.Claim;
+import pw.dotdash.township.api.claim.ClaimService;
+import pw.dotdash.township.api.invite.Invite;
+import pw.dotdash.township.api.permission.ClaimPermission;
+import pw.dotdash.township.api.resident.Resident;
+import pw.dotdash.township.api.role.TownRole;
+import pw.dotdash.township.api.role.TownRoleService;
+import pw.dotdash.township.api.warp.Warp;
+import pw.dotdash.township.api.warp.WarpService;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface Town extends Identifiable, MessageReceiver, DataSerializable {
 
@@ -29,7 +33,7 @@ public interface Town extends Identifiable, MessageReceiver, DataSerializable {
 
     String getName();
 
-    void setName(String name);
+    boolean setName(String name);
 
     boolean isOpen();
 
@@ -39,7 +43,11 @@ public interface Town extends Identifiable, MessageReceiver, DataSerializable {
 
     void setOwner(Resident resident);
 
+    Collection<UUID> getResidentIds();
+
     Collection<Resident> getResidents();
+
+    boolean hasResident(Resident resident);
 
     boolean addResident(Resident resident);
 
@@ -56,8 +64,22 @@ public interface Town extends Identifiable, MessageReceiver, DataSerializable {
                 .filter(claim -> claim.getTown().equals(this));
     }
 
+    TownRole getVisitorRole();
+
+    default Collection<TownRole> getRoles() {
+        return TownRoleService.getInstance().getRoles(this);
+    }
+
+    default Optional<TownRole> getRole(String name) {
+        return TownRoleService.getInstance().getRole(this, name);
+    }
+
     default Collection<Warp> getWarps() {
         return WarpService.getInstance().getWarpsByTown(this);
+    }
+
+    default Optional<Warp> getWarp(String name) {
+        return WarpService.getInstance().getWarp(this, name);
     }
 
     Optional<Account> getAccount();
@@ -87,6 +109,8 @@ public interface Town extends Identifiable, MessageReceiver, DataSerializable {
         Builder residents(Iterable<Resident> residents);
 
         Builder residents(Resident... residents);
+
+        Builder addVisitorRolePermission(ClaimPermission permission);
 
         Town build();
     }

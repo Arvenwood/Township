@@ -14,6 +14,7 @@ import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.text.Text
 import org.spongepowered.api.text.format.TextColors.GREEN
+import pw.dotdash.township.plugin.util.unwrap
 
 object CommandTownUnclaim : CommandExecutor {
 
@@ -27,10 +28,10 @@ object CommandTownUnclaim : CommandExecutor {
 
         val resident: Resident = ResidentService.getInstance().getOrCreateResident(src)
 
-        val town: Town = resident.town.orElse(null)
+        val town: Town = resident.town.unwrap()
             ?: throw CommandException(Text.of("You must be in a town to use that command."))
 
-        val claim: Claim = ClaimService.getInstance().getClaimAt(src.location).orElse(null)
+        val claim: Claim = ClaimService.getInstance().getClaimAt(src.location).unwrap()
             ?: throw CommandException(Text.of("This chunk has not been claimed."))
 
         if (claim.town != town) {

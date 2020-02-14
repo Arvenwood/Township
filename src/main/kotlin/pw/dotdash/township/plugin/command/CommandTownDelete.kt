@@ -13,6 +13,7 @@ import org.spongepowered.api.command.spec.CommandExecutor
 import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.text.Text
+import pw.dotdash.township.plugin.util.unwrap
 
 object CommandTownDelete : CommandExecutor {
 
@@ -27,13 +28,13 @@ object CommandTownDelete : CommandExecutor {
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
         val resident: Resident = src.getPlayerOrSystemResident()
 
-        val otherTown: Town? = args.maybeOne("town")
+        val otherTown: Town? = args.getOne<Town>("town").unwrap()
 
         if (otherTown != null) {
             disband(otherTown, resident)
         } else {
-            val town: Town = args.maybeOne("town")
-                ?: resident.town.orElse(null)
+            val town: Town = args.getOne<Town>("town").unwrap()
+                ?: resident.town.unwrap()
                 ?: throw CommandException(Text.of("You must be in a town to use that command."))
 
             if (!resident.isOwner) {
@@ -50,7 +51,7 @@ object CommandTownDelete : CommandExecutor {
         val residents: Collection<Resident> = town.residents
         if (TownService.getInstance().unregister(town)) {
             for (townResident: Resident in residents) {
-                val townPlayer: Player = townResident.player.orElse(null) ?: continue
+                val townPlayer: Player = townResident.player.unwrap() ?: continue
 
                 townPlayer.sendMessage(Text.of("Your town has been disbanded."))
             }

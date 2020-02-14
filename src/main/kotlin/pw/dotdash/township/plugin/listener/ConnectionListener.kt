@@ -1,8 +1,8 @@
 package pw.dotdash.township.plugin.listener
 
-import pw.dotdash.township.api.resident.ResidentService
 import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.network.ClientConnectionEvent
+import pw.dotdash.township.api.resident.ResidentService
 
 class ConnectionListener {
 

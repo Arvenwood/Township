@@ -40,6 +40,11 @@ class TownServiceImpl : TownService, StorageBackedService {
 
         this.townsById[town.uniqueId] = town
         this.townsByName[town.name] = town
+
+        for (resident: Resident in town.residents) {
+            resident.setTown(town)
+        }
+
         return true
     }
 

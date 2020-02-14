@@ -14,6 +14,7 @@ import org.spongepowered.api.command.args.CommandContext
 import org.spongepowered.api.command.spec.CommandExecutor
 import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.text.Text
+import pw.dotdash.township.plugin.util.unwrap
 
 object CommandTownInvite : CommandExecutor {
 
@@ -30,8 +31,8 @@ object CommandTownInvite : CommandExecutor {
         val sender: Resident = src.getPlayerOrSystemResident()
 
         val receiver: Resident = args.requireOne("receiver")
-        val town: Town = args.maybeOne("town")
-            ?: sender.town.orElse(null)
+        val town: Town = args.getOne<Town>("town").unwrap()
+            ?: sender.town.unwrap()
             ?: throw CommandException(Text.of("You must be in a town to use this command."))
 
         val invite: Invite = Invite.builder()

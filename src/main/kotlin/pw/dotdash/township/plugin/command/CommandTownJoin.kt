@@ -14,6 +14,7 @@ import org.spongepowered.api.command.spec.CommandExecutor
 import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.text.Text
+import pw.dotdash.township.plugin.util.unwrap
 
 object CommandTownJoin : CommandExecutor {
 
@@ -29,7 +30,7 @@ object CommandTownJoin : CommandExecutor {
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
         val town: Town = args.requireOne("town")
 
-        val player: Player = args.maybeOne("player")
+        val player: Player = args.getOne<Player>("player").unwrap()
             ?: src as? Player
             ?: throw CommandException(Text.of("You must specify the player argument."))
 

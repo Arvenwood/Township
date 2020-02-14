@@ -4,8 +4,9 @@ import ninja.leaping.configurate.objectmapping.Setting
 import ninja.leaping.configurate.objectmapping.serialize.ConfigSerializable
 
 @ConfigSerializable
-class EconomyConfig {
+class MainConfig {
 
-    @Setting
-    var enabled: Boolean = false
+    class Permissions {
+
+    }
 }

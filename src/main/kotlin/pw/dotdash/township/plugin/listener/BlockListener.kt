@@ -13,31 +13,40 @@ import org.spongepowered.api.event.block.tileentity.ChangeSignEvent
 import org.spongepowered.api.event.filter.cause.Root
 import org.spongepowered.api.text.Text
 import org.spongepowered.api.text.format.TextColors.RED
+import org.spongepowered.api.util.Tristate
 import org.spongepowered.api.world.Location
 import org.spongepowered.api.world.World
+import pw.dotdash.township.api.permission.ClaimPermission
+import pw.dotdash.township.api.permission.ClaimPermissions
+import pw.dotdash.township.plugin.util.unwrap
 
 class BlockListener {
 
     @Listener
     fun onBlockBreak(event: ChangeBlockEvent.Break, @Root player: Player) {
-        checkProtection(event, player)
+        checkProtection(event, player, ClaimPermissions.BREAK)
     }
 
     @Listener
     fun onBlockPlace(event: ChangeBlockEvent.Place, @Root player: Player) {
-        checkProtection(event, player)
+        checkProtection(event, player, ClaimPermissions.PLACE)
     }
 
-    private fun checkProtection(event: ChangeBlockEvent, player: Player) {
-        val resident: Resident = ResidentService.getInstance().getResident(player.uniqueId).orElse(null) ?: return
+    @Listener
+    fun onBlockModify(event: ChangeBlockEvent.Modify, @Root player: Player) {
+        checkProtection(event, player, ClaimPermissions.MODIFY)
+    }
+
+    private fun checkProtection(event: ChangeBlockEvent, player: Player, permission: ClaimPermission) {
+        val resident: Resident = ResidentService.getInstance().getOrCreateResident(player)
 
         for (transaction: Transaction<BlockSnapshot> in event.transactions) {
-            val location: Location<World> = transaction.original.location.orElse(null) ?: continue
-            val claim: Claim = ClaimService.getInstance().getClaimAt(location).orElse(null) ?: continue
+            val location: Location<World> = transaction.original.location.unwrap() ?: continue
+            val claim: Claim = ClaimService.getInstance().getClaimAt(location).unwrap() ?: continue
 
-            if (claim.town != resident.town) {
+            if (!resident.hasPermission(permission, claim)) {
                 event.isCancelled = true
-                player.sendMessage(Text.of(RED, "That chunk is owned by the town ${claim.town.name}."))
+                player.sendMessage(Text.of(RED, "You do not have the permission $permission in ${claim.town.name}'s claim."))
                 return
             }
         }
@@ -45,10 +54,10 @@ class BlockListener {
 
     @Listener
     fun onChangeSign(event: ChangeSignEvent, @Root player: Player) {
-        val resident: Resident = ResidentService.getInstance().getResident(player.uniqueId).orElse(null) ?: return
-        val claim: Claim = ClaimService.getInstance().getClaimAt(event.targetTile.location).orElse(null) ?: return
+        val resident: Resident = ResidentService.getInstance().getOrCreateResident(player)
+        val claim: Claim = ClaimService.getInstance().getClaimAt(event.targetTile.location).unwrap() ?: return
 
-        if (claim.town != resident.town) {
+        if (!resident.hasPermission(ClaimPermissions.MODIFY, claim)) {
             event.isCancelled = true
             player.sendMessage(Text.of(RED, "That chunk is owned by the town ${claim.town.name}."))
             return

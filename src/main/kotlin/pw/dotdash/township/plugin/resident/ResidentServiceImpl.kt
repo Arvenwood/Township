@@ -5,6 +5,7 @@ import pw.dotdash.township.api.resident.ResidentService
 import pw.dotdash.township.plugin.storage.DataLoader
 import pw.dotdash.township.plugin.storage.StorageBackedService
 import org.spongepowered.api.entity.living.player.Player
+import pw.dotdash.township.plugin.util.unwrap
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -13,7 +14,11 @@ class ResidentServiceImpl : ResidentService, StorageBackedService {
     private val residentsById = HashMap<UUID, Resident>()
     private val residentsByName = HashMap<String, Resident>()
 
-    private val systemResident = ResidentImpl(UUID(0, 0), "T-BOT", null)
+    private val systemResident = ResidentImpl(
+        uniqueId = UUID(0, 0),
+        name = "T-BOT",
+        townUniqueId = null
+    )
 
     override fun getSystemResident(): Resident =
         this.systemResident
@@ -28,7 +33,7 @@ class ResidentServiceImpl : ResidentService, StorageBackedService {
         Optional.ofNullable(this.residentsByName[name])
 
     override fun getOrCreateResident(player: Player): Resident {
-        this.getResident(player.uniqueId).orElse(null)?.let { return it }
+        this.getResident(player.uniqueId).unwrap()?.let { return it }
 
         val resident = ResidentImpl(player)
 

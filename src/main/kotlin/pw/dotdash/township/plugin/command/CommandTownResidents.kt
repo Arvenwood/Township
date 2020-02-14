@@ -12,11 +12,11 @@ import org.spongepowered.api.service.pagination.PaginationList
 import org.spongepowered.api.text.Text
 import pw.dotdash.township.api.resident.Resident
 import pw.dotdash.township.api.town.Town
-import pw.dotdash.township.plugin.command.element.maybeOne
 import pw.dotdash.township.plugin.command.element.optional
 import pw.dotdash.township.plugin.command.element.town
 import pw.dotdash.township.plugin.resident.getPlayerOrSystemResident
 import pw.dotdash.township.plugin.util.ampersand
+import pw.dotdash.township.plugin.util.unwrap
 
 object CommandTownResidents : CommandExecutor {
 
@@ -30,8 +30,8 @@ object CommandTownResidents : CommandExecutor {
         .build()
 
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
-        val town: Town = args.maybeOne("town")
-            ?: src.getPlayerOrSystemResident().town.orElse(null)
+        val town: Town = args.getOne<Town>("town").unwrap()
+            ?: src.getPlayerOrSystemResident().town.unwrap()
             ?: throw CommandException(Text.of("You must specify the town argument."))
 
         val filter: Filter = args.requireOne("filter")

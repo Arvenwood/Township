@@ -4,8 +4,11 @@ import pw.dotdash.township.api.town.Town
 import pw.dotdash.township.api.warp.Warp
 import pw.dotdash.township.plugin.storage.DataQueries
 import org.spongepowered.api.data.DataContainer
+import org.spongepowered.api.data.DataView
+import org.spongepowered.api.data.persistence.AbstractDataBuilder
 import org.spongepowered.api.world.Location
 import org.spongepowered.api.world.World
+import pw.dotdash.township.plugin.util.getUUID
 import java.util.*
 
 data class WarpImpl(
@@ -27,10 +30,28 @@ data class WarpImpl(
 
     override fun toContainer(): DataContainer =
         DataContainer.createNew()
-            .set(DataQueries.UNIQUE_ID, this.uniqueId.toString())
+            .set(DataQueries.UNIQUE_ID, this.uniqueId)
             .set(DataQueries.NAME, this.name)
             .set(DataQueries.LOCATION, this.location)
-            .set(DataQueries.TOWN_UNIQUE_ID, this.townUniqueId.toString())
+            .set(DataQueries.TOWN_UNIQUE_ID, this.townUniqueId)
+
+    object DataBuilder : AbstractDataBuilder<Warp>(Warp::class.java, 1) {
+        override fun buildContent(container: DataView): Optional<Warp> {
+            val uniqueId: UUID = container.getUUID(DataQueries.UNIQUE_ID).get()
+            val name: String = container.getString(DataQueries.NAME).get()
+            val location: Location<World> = container.getSerializable(DataQueries.LOCATION, Location::class.java).get() as Location<World>
+            val townUniqueId: UUID = container.getUUID(DataQueries.TOWN_UNIQUE_ID).get()
+
+            val warp = WarpImpl(
+                uniqueId = uniqueId,
+                name = name,
+                location = location,
+                townUniqueId = townUniqueId
+            )
+
+            return Optional.of(warp)
+        }
+    }
 
     class Builder : Warp.Builder {
 

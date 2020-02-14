@@ -3,7 +3,6 @@ package pw.dotdash.township.plugin.command
 import pw.dotdash.township.api.resident.Resident
 import pw.dotdash.township.api.resident.ResidentService
 import pw.dotdash.township.api.town.Town
-import pw.dotdash.township.plugin.command.element.maybeOne
 import pw.dotdash.township.plugin.command.element.onlyOne
 import pw.dotdash.township.plugin.command.element.optional
 import pw.dotdash.township.plugin.command.element.requiringPermission
@@ -17,6 +16,7 @@ import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.text.Text
 import org.spongepowered.api.text.format.TextColors.YELLOW
+import pw.dotdash.township.plugin.util.unwrap
 
 object CommandTownLeave : CommandExecutor {
 
@@ -29,13 +29,13 @@ object CommandTownLeave : CommandExecutor {
         .build()
 
     override fun execute(src: CommandSource, args: CommandContext): CommandResult {
-        val player: Player = args.maybeOne("player")
+        val player: Player = args.getOne<Player>("player").unwrap()
             ?: src as? Player
             ?: throw CommandException(Text.of("You must specify the player argument."))
 
         val resident: Resident = ResidentService.getInstance().getOrCreateResident(player)
 
-        val town: Town = resident.town.orElse(null)
+        val town: Town = resident.town.unwrap()
             ?: throw CommandException(Text.of("You must be in a town to use that command."))
 
         if (resident.isOwner) {
