@@ -1,4 +1,4 @@
 @NonnullByDefault
 package pw.dotdash.township.api.claim;
 
-import pw.dotdash.township.api.util.NonnullByDefault;
+import org.spongepowered.api.util.annotation.NonnullByDefault;

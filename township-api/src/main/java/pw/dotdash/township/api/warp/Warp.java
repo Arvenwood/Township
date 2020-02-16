@@ -1,5 +1,6 @@
 package pw.dotdash.township.api.warp;
 
+import org.spongepowered.api.Sponge;
 import pw.dotdash.township.api.town.Town;
 import pw.dotdash.township.api.town.TownService;
 import org.spongepowered.api.data.DataSerializable;
@@ -12,17 +13,42 @@ import java.util.UUID;
 
 public interface Warp extends Identifiable, DataSerializable {
 
+    /**
+     * Creates a new {@link Builder} to build a {@link Warp}.
+     *
+     * @return The new builder
+     */
+    static Builder builder() {
+        return Sponge.getRegistry().createBuilder(Builder.class);
+    }
+
+    /**
+     * Gets the name of the warp.
+     *
+     * @return The name of the warp
+     */
     String getName();
 
+    /**
+     * Gets the location where players are warped to.
+     *
+     * @return The warp location
+     */
     Location<World> getLocation();
 
-    UUID getTownUniqueId();
+    /**
+     * Gets the {@link UUID} of the town the warp is associated with.
+     *
+     * @return The associated town's id
+     */
+    UUID getTownId();
 
-    default Town getTown() {
-        return TownService.getInstance()
-                .getTown(this.getTownUniqueId())
-                .orElseThrow(() -> new RuntimeException("Town " + this.getTownUniqueId() + " is not loaded"));
-    }
+    /**
+     * Gets the town the warp is associated with.
+     *
+     * @return The associated town
+     */
+    Town getTown();
 
     interface Builder extends ResettableBuilder<Warp, Builder> {
 

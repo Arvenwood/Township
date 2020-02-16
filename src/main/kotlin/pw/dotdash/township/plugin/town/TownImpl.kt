@@ -1,8 +1,6 @@
 package pw.dotdash.township.plugin.town
 
 import pw.dotdash.township.api.event.town.ChangeTownEvent
-import pw.dotdash.township.api.invite.Invite
-import pw.dotdash.township.api.invite.InviteService
 import pw.dotdash.township.api.resident.Resident
 import pw.dotdash.township.api.town.Town
 import pw.dotdash.township.plugin.event.town.ChangeTownEventImpl
@@ -11,24 +9,26 @@ import org.spongepowered.api.Sponge
 import org.spongepowered.api.data.DataContainer
 import org.spongepowered.api.data.DataView
 import org.spongepowered.api.data.persistence.AbstractDataBuilder
+import org.spongepowered.api.service.economy.Currency
 import org.spongepowered.api.service.economy.EconomyService
 import org.spongepowered.api.service.economy.account.Account
 import org.spongepowered.api.text.Text
 import org.spongepowered.api.text.channel.MessageChannel
+import pw.dotdash.township.api.nation.Nation
 import pw.dotdash.township.api.permission.ClaimPermission
-import pw.dotdash.township.api.permission.Permission
 import pw.dotdash.township.api.resident.ResidentService
-import pw.dotdash.township.api.role.TownRole
+import pw.dotdash.township.api.town.TownRole
 import pw.dotdash.township.api.town.TownService
 import pw.dotdash.township.plugin.role.TownRoleImpl
 import pw.dotdash.township.plugin.util.*
+import java.math.BigDecimal
 import java.util.*
 
 data class TownImpl(
     private val uniqueId: UUID,
     private var name: String,
     private var open: Boolean,
-    private var owner: Resident,
+    private var ownerId: UUID,
     private val visitorRole: TownRole
 ) : Town {
 
@@ -61,31 +61,46 @@ data class TownImpl(
 
     override fun isOpen(): Boolean = this.open
 
-    override fun setOpen(open: Boolean) {
-        if (this.open == open) return
+    override fun setOpen(open: Boolean): Boolean {
+        if (this.open == open) return false
 
         Sponge.getEventManager()
             .tryPost(ChangeTownEventImpl.Open(open, this, Sponge.getCauseStackManager().currentCause))
-            ?: return
+            ?: return false
 
         this.open = open
+        return true
     }
 
     override fun getOwner(): Resident =
-        this.owner
+        ResidentService.getInstance().getResident(this.ownerId)
+            .orElseThrow { IllegalStateException("Resident $ownerId is not loaded") }
 
-    override fun setOwner(resident: Resident) {
-        if (this.owner == resident) return
+    override fun isOwner(resident: Resident): Boolean =
+        this.ownerId == resident.uniqueId
+
+    override fun setOwner(resident: Resident): Boolean {
+        if (this.isOwner(resident)) return false
 
         val event: ChangeTownEvent.Owner = Sponge.getEventManager()
             .tryPost(ChangeTownEventImpl.Owner(this.owner, resident, this, Sponge.getCauseStackManager().currentCause))
-            ?: return
+            ?: return false
 
-        this.owner = event.newOwner
+        this.ownerId = event.newOwner.uniqueId
+        return true
     }
 
-    override fun getResidentIds(): Collection<UUID> =
-        this.residents.toSet()
+    override fun getNation(): Optional<Nation> {
+        TODO()
+    }
+
+    override fun hasNation(): Boolean {
+        TODO()
+    }
+
+    override fun setNation(nation: Nation?): Boolean {
+        TODO()
+    }
 
     override fun getResidents(): Collection<Resident> =
         this.residents.mapNotNull { ResidentService.getInstance().getResident(it).unwrap() }
@@ -117,22 +132,24 @@ data class TownImpl(
         return true
     }
 
-    override fun inviteResident(sender: Resident, receiver: Resident): Invite {
-        val invite: Invite = Invite.builder()
-            .sender(sender)
-            .receiver(receiver)
-            .town(this)
-            .build()
-
-        InviteService.getInstance().register(invite)
-        return invite
-    }
-
     override fun getVisitorRole(): TownRole = this.visitorRole
 
     override fun getAccount(): Optional<Account> =
         Sponge.getServiceManager().provide(EconomyService::class.java)
             .flatMap { it.getOrCreateAccount("town-$uniqueId") }
+
+    override fun getBalance(currency: Currency): BigDecimal =
+        this.account
+            .map { it.getBalance(currency) }
+            .orElse(BigDecimal.ZERO)
+
+    override fun getBalance(): BigDecimal =
+        this.account
+            .flatMap { acc: Account ->
+                Sponge.getServiceManager().provide(EconomyService::class.java)
+                    .map { acc.getBalance(it.defaultCurrency) }
+            }
+            .orElse(BigDecimal.ZERO)
 
     override fun sendMessage(message: Text) {
         this.messageChannel.send(message)
@@ -152,7 +169,7 @@ data class TownImpl(
             .set(DataQueries.UNIQUE_ID, this.uniqueId)
             .set(DataQueries.NAME, this.name)
             .set(DataQueries.OPEN, this.open)
-            .set(DataQueries.OWNER_UNIQUE_ID, this.owner.uniqueId)
+            .set(DataQueries.OWNER_ID, this.ownerId)
             .set(DataQueries.VISITOR_ROLE, this.visitorRole)
             .set(DataQueries.RESIDENT_UNIQUE_IDS, this.residents)
 
@@ -161,7 +178,7 @@ data class TownImpl(
             val uniqueId: UUID = container.getUUID(DataQueries.UNIQUE_ID).get()
             val name: String = container.getString(DataQueries.NAME).get()
             val open: Boolean = container.getBoolean(DataQueries.OPEN).get()
-            val owner: Resident = container.getResidentByUUID(DataQueries.OWNER_UNIQUE_ID).get()
+            val ownerId: UUID = container.getUUID(DataQueries.OWNER_ID).get()
             val visitorRole: TownRole = container.getSerializable(DataQueries.VISITOR_ROLE, TownRole::class.java).get()
             val residents: List<UUID> = container.getUUIDList(DataQueries.RESIDENT_UNIQUE_IDS).get()
 
@@ -169,7 +186,7 @@ data class TownImpl(
                 uniqueId = uniqueId,
                 name = name,
                 open = open,
-                owner = owner,
+                ownerId = ownerId,
                 visitorRole = visitorRole
             )
 
@@ -183,7 +200,7 @@ data class TownImpl(
 
         private var name: String? = null
         private var open: Boolean = false
-        private var owner: Resident? = null
+        private var ownerId: UUID? = null
         private var residents: Set<UUID>? = null
 
         private val visitorRolePermissions = HashSet<ClaimPermission>()
@@ -199,7 +216,7 @@ data class TownImpl(
         }
 
         override fun owner(owner: Resident): Town.Builder {
-            this.owner = owner
+            this.ownerId = owner.uniqueId
             return this
         }
 
@@ -221,8 +238,8 @@ data class TownImpl(
         override fun from(value: Town): Town.Builder {
             this.name = value.name
             this.open = value.isOpen
-            this.owner = value.owner
-            this.residents = value.residentIds.toSet()
+            this.ownerId = value.owner.uniqueId
+            this.residents = value.residents.mapTo(HashSet(), Resident::getUniqueId)
 
             this.visitorRolePermissions.clear()
             this.visitorRolePermissions += value.visitorRole.permissions.filterIsInstance<ClaimPermission>()
@@ -232,21 +249,22 @@ data class TownImpl(
         override fun reset(): Town.Builder {
             this.name = null
             this.open = false
-            this.owner = null
+            this.ownerId = null
             this.residents = null
             this.visitorRolePermissions.clear()
             return this
         }
 
         override fun build(): Town {
-            val owner: Resident = checkNotNull(this.owner)
+            val ownerId: UUID = checkNotNull(this.ownerId)
 
             val uniqueId: UUID = UUID.randomUUID()
 
             val visitorRole = TownRoleImpl(
                 uniqueId = UUID(0, 0),
                 name = "visitor",
-                townUniqueId = uniqueId
+                priority = 0,
+                townId = uniqueId
             )
             visitorRole.loadPermissions(this.visitorRolePermissions)
 
@@ -254,12 +272,12 @@ data class TownImpl(
                 uniqueId = uniqueId,
                 name = checkNotNull(this.name),
                 open = this.open,
-                owner = owner,
+                ownerId = ownerId,
                 visitorRole = visitorRole
             )
 
             this.residents?.let(town::loadResidents)
-            town.loadResidents(listOf(owner.uniqueId))
+            town.loadResidents(listOf(ownerId))
 
             return town
         }

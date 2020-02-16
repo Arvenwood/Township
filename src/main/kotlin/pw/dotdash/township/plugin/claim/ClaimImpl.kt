@@ -1,8 +1,5 @@
 package pw.dotdash.township.plugin.claim
 
-import pw.dotdash.township.api.claim.Claim
-import pw.dotdash.township.api.town.Town
-import pw.dotdash.township.plugin.storage.DataQueries
 import com.flowpowered.math.vector.Vector3i
 import com.google.common.collect.Table
 import com.google.common.collect.Tables
@@ -12,8 +9,12 @@ import org.spongepowered.api.data.Queries
 import org.spongepowered.api.data.persistence.AbstractDataBuilder
 import org.spongepowered.api.util.Tristate
 import org.spongepowered.api.world.World
+import pw.dotdash.township.api.claim.Claim
 import pw.dotdash.township.api.permission.ClaimPermission
-import pw.dotdash.township.api.role.Role
+import pw.dotdash.township.api.permission.Role
+import pw.dotdash.township.api.town.Town
+import pw.dotdash.township.api.town.TownService
+import pw.dotdash.township.plugin.storage.DataQueries
 import pw.dotdash.township.plugin.util.*
 import java.util.*
 
@@ -35,7 +36,10 @@ data class ClaimImpl(
 
     override fun getChunkPosition(): Vector3i = this.chunkPosition
 
-    override fun getTownUniqueId(): UUID = this.townUniqueId
+    override fun getTown(): Town =
+        TownService.getInstance()
+            .getTown(this.townUniqueId)
+            .orElseThrow { IllegalStateException("Town $townUniqueId is not loaded") }
 
     override fun getPermissionOverrides(role: Role): Map<ClaimPermission, Boolean> =
         this.rolePermissionOverrides.row(role.uniqueId).toMap()
@@ -66,15 +70,15 @@ data class ClaimImpl(
             .set(Queries.CONTENT_VERSION, this.contentVersion)
             .set(DataQueries.WORLD_UNIQUE_ID, this.worldUniqueId)
             .set(DataQueries.CHUNK_POSITION, this.chunkPosition)
-            .set(DataQueries.TOWN_UNIQUE_ID, this.townUniqueId)
+            .set(DataQueries.TOWN_ID, this.townUniqueId)
             .set(DataQueries.ROLE_PERMISSION_OVERRIDES, this.rolePermissionOverrides.toContainer())
     }
 
     object DataBuilder : AbstractDataBuilder<Claim>(Claim::class.java, 1) {
         override fun buildContent(container: DataView): Optional<Claim> {
             val worldUniqueId: UUID = container.getUUID(DataQueries.WORLD_UNIQUE_ID).get()
-            val chunkPosition = container.getObject(DataQueries.CHUNK_POSITION, Vector3i::class.java).get()
-            val townUniqueId: UUID = container.getUUID(DataQueries.TOWN_UNIQUE_ID).get()
+            val chunkPosition: Vector3i = container.getObject(DataQueries.CHUNK_POSITION, Vector3i::class.java).get()
+            val townUniqueId: UUID = container.getUUID(DataQueries.TOWN_ID).get()
 
             val rolePermissionOverrides: Table<UUID, ClaimPermission, Boolean> =
                 container.getRolePermissionOverrides(DataQueries.ROLE_PERMISSION_OVERRIDES).get()

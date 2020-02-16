@@ -1,4 +1,4 @@
 @NonnullByDefault
-package pw.dotdash.township.api.town;
+package pw.dotdash.township.api.nation;
 
 import org.spongepowered.api.util.annotation.NonnullByDefault;

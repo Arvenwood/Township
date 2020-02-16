@@ -1,6 +1,5 @@
 package pw.dotdash.township.api.permission;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.util.annotation.CatalogedBy;
 
@@ -11,21 +10,7 @@ public interface ClaimPermission extends Permission {
         return Sponge.getRegistry().createBuilder(Builder.class);
     }
 
-    interface Builder extends Permission.Builder {
+    interface Builder extends Permission.Builder<ClaimPermission, Builder> {
 
-        @Override
-        Builder id(@NonNull String id);
-
-        @Override
-        Builder name(@NonNull String name);
-
-        @Override
-        Builder from(Permission value);
-
-        @Override
-        Builder reset();
-
-        @NonNull
-        ClaimPermission build();
     }
 }

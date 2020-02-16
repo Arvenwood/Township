@@ -7,21 +7,36 @@ import org.spongepowered.api.util.ResettableBuilder;
 import org.spongepowered.api.util.Tristate;
 import org.spongepowered.api.world.World;
 import pw.dotdash.township.api.permission.ClaimPermission;
-import pw.dotdash.township.api.role.Role;
+import pw.dotdash.township.api.permission.Role;
 import pw.dotdash.township.api.town.Town;
-import pw.dotdash.township.api.town.TownService;
 
 import java.util.Map;
 import java.util.UUID;
 
 public interface Claim extends DataSerializable {
 
+    /**
+     * Creates a new {@link Builder} to build a {@link Claim}.
+     *
+     * @return The new builder
+     */
     static Builder builder() {
         return Sponge.getRegistry().createBuilder(Builder.class);
     }
 
+    /**
+     * Gets the {@link UUID} of the world this claim is located in.
+     *
+     * @return The world UUID
+     */
     UUID getWorldUniqueId();
 
+    /**
+     * Gets the world this claim is located in.
+     *
+     * @return The world
+     * @throws IllegalStateException If the world is not loaded
+     */
     default World getWorld() {
         return Sponge.getServer()
                 .getWorld(this.getWorldUniqueId())
@@ -30,13 +45,7 @@ public interface Claim extends DataSerializable {
 
     Vector3i getChunkPosition();
 
-    UUID getTownUniqueId();
-
-    default Town getTown() {
-        return TownService.getInstance()
-                .getTown(this.getTownUniqueId())
-                .orElseThrow(() -> new IllegalStateException("Town " + this.getTownUniqueId() + " is not loaded"));
-    }
+    Town getTown();
 
     Map<ClaimPermission, Boolean> getPermissionOverrides(Role role);
 

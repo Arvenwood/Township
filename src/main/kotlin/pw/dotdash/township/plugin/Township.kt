@@ -34,11 +34,13 @@ import org.spongepowered.api.event.Listener
 import org.spongepowered.api.event.game.state.*
 import org.spongepowered.api.plugin.Plugin
 import org.spongepowered.api.scheduler.Task
+import pw.dotdash.director.sponge.CommandTreeCallable
 import pw.dotdash.township.api.permission.ClaimPermission
 import pw.dotdash.township.api.permission.Permission
 import pw.dotdash.township.api.permission.TownPermission
-import pw.dotdash.township.api.role.TownRole
-import pw.dotdash.township.api.role.TownRoleService
+import pw.dotdash.township.api.town.TownRole
+import pw.dotdash.township.api.town.TownRoleService
+import pw.dotdash.township.plugin.command.special.CommandPlayTheSpacesGame
 import pw.dotdash.township.plugin.permission.*
 import pw.dotdash.township.plugin.resident.ResidentImpl
 import pw.dotdash.township.plugin.role.TownRoleImpl
@@ -134,7 +136,8 @@ class Township @Inject constructor(
 
         this.logger.info("Registering commands...")
 
-        Sponge.getCommandManager().register(this, CommandTown.SPEC, "town", "t")
+        Sponge.getCommandManager().register(this, CommandTreeCallable(CommandTown.TREE), "town", "t")
+        Sponge.getCommandManager().register(this, CommandTreeCallable(CommandPlayTheSpacesGame.TREE), "playthecharactergame")
     }
 
     @Listener
@@ -161,36 +164,22 @@ class Township @Inject constructor(
     }
 
     private fun loadPluginData() {
-        this.logger.info("Loading residents...")
+        this.logger.info("Loading plugin data...")
+
         this.residentService.load(this.dataLoader)
-
-        this.logger.info("Loading towns...")
         this.townService.load(this.dataLoader)
-
-        this.logger.info("Loading town roles...")
         this.townRoleService.load(this.dataLoader)
-
-        this.logger.info("Loading claims...")
         this.claimService.load(this.dataLoader)
-
-        this.logger.info("Loading warps...")
         this.warpService.load(this.dataLoader)
     }
 
     private fun savePluginData() {
-        this.logger.info("Saving residents...")
+        this.logger.info("Saving plugin data...")
+
         this.residentService.save(this.dataLoader)
-
-        this.logger.info("Saving towns...")
         this.townService.save(this.dataLoader)
-
-        this.logger.info("Saving town roles...")
         this.townRoleService.save(this.dataLoader)
-
-        this.logger.info("Saving claims...")
         this.claimService.save(this.dataLoader)
-
-        this.logger.info("Saving warps...")
         this.warpService.save(this.dataLoader)
     }
 }

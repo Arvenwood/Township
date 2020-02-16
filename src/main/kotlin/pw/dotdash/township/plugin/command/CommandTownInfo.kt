@@ -4,31 +4,21 @@ import org.spongepowered.api.Sponge
 import org.spongepowered.api.command.CommandException
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
-import org.spongepowered.api.command.args.CommandContext
-import org.spongepowered.api.command.spec.CommandExecutor
-import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.service.economy.Currency
 import org.spongepowered.api.service.economy.EconomyService
 import org.spongepowered.api.service.pagination.PaginationList
 import org.spongepowered.api.text.Text
+import pw.dotdash.director.core.HCons
+import pw.dotdash.director.core.HNil
 import pw.dotdash.township.api.town.Town
-import pw.dotdash.township.plugin.command.element.optional
-import pw.dotdash.township.plugin.command.element.town
 import pw.dotdash.township.plugin.resident.getPlayerOrSystemResident
 import pw.dotdash.township.plugin.util.ampersand
 import pw.dotdash.township.plugin.util.unwrap
 
-object CommandTownInfo : CommandExecutor {
+object CommandTownInfo {
 
-    val SPEC: CommandSpec = CommandSpec.builder()
-        .permission("township.town.info.base")
-        .arguments(town(Text.of("town")).optional())
-        .executor(this)
-        .build()
-
-    override fun execute(src: CommandSource, args: CommandContext): CommandResult {
-        val town: Town = args.getOne<Town>("town").unwrap()
-            ?: src.getPlayerOrSystemResident().town.unwrap()
+    fun info(src: CommandSource, args: HCons<Town?, HNil>): CommandResult {
+        val town: Town = args.head ?: src.getPlayerOrSystemResident().town.unwrap()
             ?: throw CommandException(Text.of("You must specify the town argument."))
 
         val pagination: PaginationList = showTown(town)

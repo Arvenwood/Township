@@ -1,30 +1,20 @@
 package pw.dotdash.township.plugin.command
 
-import pw.dotdash.township.api.town.Town
-import pw.dotdash.township.api.town.TownService
-import pw.dotdash.township.plugin.command.element.optional
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
-import org.spongepowered.api.command.args.CommandContext
-import org.spongepowered.api.command.args.GenericArguments.enumValue
-import org.spongepowered.api.command.spec.CommandExecutor
-import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.service.pagination.PaginationList
 import org.spongepowered.api.text.Text
 import org.spongepowered.api.text.format.TextColors.GOLD
 import org.spongepowered.api.text.format.TextColors.YELLOW
+import pw.dotdash.director.core.HCons
+import pw.dotdash.director.core.HNil
+import pw.dotdash.township.api.town.Town
+import pw.dotdash.township.api.town.TownService
 
-object CommandTownList : CommandExecutor {
+object CommandTownList {
 
-    val SPEC: CommandSpec = CommandSpec.builder()
-        .permission("township.town.list.base")
-        .arguments(enumValue(Text.of("sortBy"), SortBy::class.java).optional(SortBy.NAME))
-        .executor(this)
-        .build()
-
-    override fun execute(src: CommandSource, args: CommandContext): CommandResult {
-        val sortBy: SortBy = args.requireOne("sortBy")
-        val towns: Collection<Town> = TownService.getInstance().towns.sortedWith(sortBy.comparator)
+    fun list(src: CommandSource, args: HCons<SortBy, HNil>): CommandResult {
+        val towns: Collection<Town> = TownService.getInstance().towns.sortedWith(args.head.comparator)
 
         val pagination: PaginationList = PaginationList.builder()
             .title(Text.of(YELLOW, "Towns"))
@@ -38,7 +28,7 @@ object CommandTownList : CommandExecutor {
     }
 
     @Suppress("unused")
-    private enum class SortBy(val comparator: Comparator<Town>) {
+    enum class SortBy(val comparator: Comparator<Town>) {
         /**
          * Sort alphabetically.
          */

@@ -17,6 +17,9 @@ class WarpServiceImpl : WarpService, StorageBackedService {
     override fun getWarps(): Collection<Warp> =
         this.townToNameTable.values().toSet()
 
+    override fun getWarp(uniqueId: UUID): Optional<Warp> =
+        Optional.ofNullable(this.townToNameTable.values().find { it.uniqueId == uniqueId })
+
     override fun getWarpsByTown(town: Town): Collection<Warp> =
         this.townToNameTable.row(town.uniqueId).values.toSet()
 
@@ -48,7 +51,7 @@ class WarpServiceImpl : WarpService, StorageBackedService {
         this.townToNameTable.clear()
 
         for (warp: Warp in dataLoader.loadWarps()) {
-            this.townToNameTable.put(warp.townUniqueId, warp.name, warp)
+            this.townToNameTable.put(warp.townId, warp.name, warp)
         }
     }
 

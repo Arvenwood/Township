@@ -3,39 +3,24 @@ package pw.dotdash.township.plugin.command
 import org.spongepowered.api.command.CommandException
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
-import org.spongepowered.api.command.args.CommandContext
-import org.spongepowered.api.command.args.GenericArguments.enumValue
-import org.spongepowered.api.command.spec.CommandExecutor
-import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.data.key.Keys
 import org.spongepowered.api.service.pagination.PaginationList
 import org.spongepowered.api.text.Text
+import pw.dotdash.director.core.HCons
+import pw.dotdash.director.core.HNil
 import pw.dotdash.township.api.resident.Resident
 import pw.dotdash.township.api.town.Town
-import pw.dotdash.township.plugin.command.element.optional
-import pw.dotdash.township.plugin.command.element.town
 import pw.dotdash.township.plugin.resident.getPlayerOrSystemResident
 import pw.dotdash.township.plugin.util.ampersand
 import pw.dotdash.township.plugin.util.unwrap
 
-object CommandTownResidents : CommandExecutor {
+object CommandTownResidents {
 
-    val SPEC: CommandSpec = CommandSpec.builder()
-        .permission("township.town.residents.base")
-        .arguments(
-            town(Text.of("town")).optional(),
-            enumValue(Text.of("filter"), Filter::class.java).optional(Filter.NONE)
-        )
-        .executor(this)
-        .build()
-
-    override fun execute(src: CommandSource, args: CommandContext): CommandResult {
-        val town: Town = args.getOne<Town>("town").unwrap()
-            ?: src.getPlayerOrSystemResident().town.unwrap()
+    fun residents(src: CommandSource, args: HCons<Filter, HCons<Town?, HNil>>): CommandResult {
+        val town: Town = args.tail.head ?: src.getPlayerOrSystemResident().town.unwrap()
             ?: throw CommandException(Text.of("You must specify the town argument."))
 
-        val filter: Filter = args.requireOne("filter")
-        val residents: Collection<Resident> = town.residents.filter(filter.filter)
+        val residents: Collection<Resident> = town.residents.filter(args.head.filter)
 
         val pagination: PaginationList = PaginationList.builder()
             .title("&a${residents.size} &2Residents &2(&a${town.name}&2)".ampersand())
@@ -49,7 +34,7 @@ object CommandTownResidents : CommandExecutor {
     }
 
     @Suppress("unused")
-    private enum class Filter(val filter: (Resident) -> Boolean) {
+    enum class Filter(val filter: (Resident) -> Boolean) {
         /**
          * Accepts all residents.
          */

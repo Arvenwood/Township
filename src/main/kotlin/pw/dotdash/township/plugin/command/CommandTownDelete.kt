@@ -1,40 +1,30 @@
 package pw.dotdash.township.plugin.command
 
-import pw.dotdash.township.api.resident.Resident
-import pw.dotdash.township.api.town.Town
-import pw.dotdash.township.api.town.TownService
-import pw.dotdash.township.plugin.command.element.*
-import pw.dotdash.township.plugin.resident.getPlayerOrSystemResident
 import org.spongepowered.api.command.CommandException
 import org.spongepowered.api.command.CommandResult
 import org.spongepowered.api.command.CommandSource
-import org.spongepowered.api.command.args.CommandContext
-import org.spongepowered.api.command.spec.CommandExecutor
-import org.spongepowered.api.command.spec.CommandSpec
 import org.spongepowered.api.entity.living.player.Player
 import org.spongepowered.api.text.Text
+import pw.dotdash.director.core.HCons
+import pw.dotdash.director.core.HNil
+import pw.dotdash.director.core.component1
+import pw.dotdash.township.api.resident.Resident
+import pw.dotdash.township.api.town.Town
+import pw.dotdash.township.api.town.TownService
+import pw.dotdash.township.plugin.resident.getPlayerOrSystemResident
 import pw.dotdash.township.plugin.util.unwrap
 
-object CommandTownDelete : CommandExecutor {
+object CommandTownDelete {
 
-    val SPEC: CommandSpec = CommandSpec.builder()
-        .permission("township.town.delete.base")
-        .arguments(
-            town(Text.of("town")).requiringPermission("township.town.delete.other").optional()
-        )
-        .executor(this)
-        .build()
-
-    override fun execute(src: CommandSource, args: CommandContext): CommandResult {
+    fun delete(src: CommandSource, args: HCons<Town?, HNil>): CommandResult {
         val resident: Resident = src.getPlayerOrSystemResident()
 
-        val otherTown: Town? = args.getOne<Town>("town").unwrap()
+        val (otherTown: Town?) = args
 
         if (otherTown != null) {
             disband(otherTown, resident)
         } else {
-            val town: Town = args.getOne<Town>("town").unwrap()
-                ?: resident.town.unwrap()
+            val town: Town = resident.town.unwrap()
                 ?: throw CommandException(Text.of("You must be in a town to use that command."))
 
             if (!resident.isOwner) {

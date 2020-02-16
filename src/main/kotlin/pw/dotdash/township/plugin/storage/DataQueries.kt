@@ -4,15 +4,9 @@ import org.spongepowered.api.data.DataQuery
 
 object DataQueries {
 
-    val CHUNK_POSITION_X: DataQuery = DataQuery.of("ChunkPositionX")
-
-    val CHUNK_POSITION_Y: DataQuery = DataQuery.of("ChunkPositionY")
-
-    val CHUNK_POSITION_Z: DataQuery = DataQuery.of("ChunkPositionZ")
+    val CHUNK_POSITION: DataQuery = DataQuery.of("ChunkPosition")
 
     val CLAIMS: DataQuery = DataQuery.of("Claims")
-
-    val DEFAULT_CLAIM_PERMISSIONS: DataQuery = DataQuery.of("DefaultClaimPermissions")
 
     val FRIENDS: DataQuery = DataQuery.of("Friends")
 
@@ -22,9 +16,11 @@ object DataQueries {
 
     val OPEN: DataQuery = DataQuery.of("Open")
 
-    val OWNER_UNIQUE_ID: DataQuery = DataQuery.of("OwnerUniqueId")
+    val OWNER_ID: DataQuery = DataQuery.of("OwnerId")
 
     val PERMISSIONS: DataQuery = DataQuery.of("Permissions")
+
+    val PRIORITY: DataQuery = DataQuery.of("Priority")
 
     val RESIDENTS: DataQuery = DataQuery.of("Residents")
 
@@ -36,9 +32,7 @@ object DataQueries {
 
     val TOWNS: DataQuery = DataQuery.of("Towns")
 
-    val TOWN_UNIQUE_ID: DataQuery = DataQuery.of("TownUniqueId")
-
-    val TOWN_NAME: DataQuery = DataQuery.of("Name")
+    val TOWN_ID: DataQuery = DataQuery.of("TownId")
 
     val TOWN_ROLES: DataQuery = DataQuery.of("TownRoles")
 

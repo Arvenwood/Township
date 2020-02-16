@@ -13,6 +13,7 @@ allprojects {
 repositories {
     mavenCentral()
     maven("https://repo.spongepowered.org/maven")
+    maven("https://jitpack.io")
 }
 
 dependencies {
@@ -21,10 +22,16 @@ dependencies {
 
     implementation(project(":township-api"))
 
+    implementation("com.github.TheFrontier.director:director-core:aab35a1e45")
+    implementation("com.github.TheFrontier.director:director-sponge:aab35a1e45")
+
     runtime(kotlin("stdlib-jdk8"))
     runtime(kotlin("reflect"))
 
     runtime(project(":township-api"))
+
+    runtime("com.github.TheFrontier.director:director-core:aab35a1e45")
+    runtime("com.github.TheFrontier.director:director-sponge:aab35a1e45")
 
     compileOnly("org.spongepowered:spongeapi:7.1.0")
     kapt("org.spongepowered:spongeapi:7.1.0")
@@ -46,6 +53,7 @@ tasks {
     shadowJar {
         archiveClassifier.set("dist")
 
+        relocate("pw.dotdash.director", "pw.dotdash.township.plugin.lib.director")
         relocate("kotlin", "pw.dotdash.township.plugin.lib.kotlin")
         relocate("org.jetbrains", "pw.dotdash.township.plugin.lib.jetbrains")
 

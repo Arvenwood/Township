@@ -43,26 +43,27 @@ fun DataView.getClaimPermissions(path: DataQuery): Optional<Map<ClaimPermission,
         result
     }
 
-fun DataView.getRolePermissionOverrides(): Table<UUID, ClaimPermission, Boolean> {
-    val result: Table<UUID, ClaimPermission, Boolean> =
-        Tables.newCustomTable(HashMap()) { HashMap<ClaimPermission, Boolean>() }
+fun DataView.getRolePermissionOverrides(path: DataQuery): Optional<Table<UUID, ClaimPermission, Boolean>> =
+    this.getView(path).map { sub: DataView ->
+        val result: Table<UUID, ClaimPermission, Boolean> =
+            Tables.newCustomTable(HashMap()) { HashMap<ClaimPermission, Boolean>() }
 
-    for (roleKey: DataQuery in this.getKeys(false)) {
-        val role: UUID = UUID.fromString(roleKey.toString())
-        val subView: DataView = this.getView(roleKey).get()
+        for (roleKey: DataQuery in sub.getKeys(false)) {
+            val role: UUID = UUID.fromString(roleKey.toString())
+            val subView: DataView = sub.getView(roleKey).get()
 
-        for (permissionKey: DataQuery in subView.getKeys(false)) {
-            val permission: ClaimPermission = Sponge.getRegistry()
-                .getType(ClaimPermission::class.java, permissionKey.toString())
-                .unwrap() ?: continue
-            val value: Boolean = subView.getBoolean(permissionKey).get()
+            for (permissionKey: DataQuery in subView.getKeys(false)) {
+                val permission: ClaimPermission = Sponge.getRegistry()
+                    .getType(ClaimPermission::class.java, permissionKey.toString())
+                    .unwrap() ?: continue
+                val value: Boolean = subView.getBoolean(permissionKey).get()
 
-            result[role, permission] = value
+                result[role, permission] = value
+            }
         }
-    }
 
-    return result
-}
+        result
+    }
 
 fun Table<UUID, ClaimPermission, Boolean>.toContainer(): DataContainer {
     val result: DataContainer = DataContainer.createNew()
@@ -71,7 +72,7 @@ fun Table<UUID, ClaimPermission, Boolean>.toContainer(): DataContainer {
         val container: DataContainer = DataContainer.createNew()
 
         for ((permission: ClaimPermission, value: Boolean) in this.row(role)) {
-            container.set(DataQuery.of(permission.toString()), value)
+            container.set(DataQuery.of(permission.id), value)
         }
 
         result.set(DataQuery.of(role.toString()), container)

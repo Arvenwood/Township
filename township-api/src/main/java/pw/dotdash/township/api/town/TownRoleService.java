@@ -1,7 +1,6 @@
-package pw.dotdash.township.api.role;
+package pw.dotdash.township.api.town;
 
 import org.spongepowered.api.Sponge;
-import pw.dotdash.township.api.town.Town;
 
 import java.util.Collection;
 import java.util.Optional;

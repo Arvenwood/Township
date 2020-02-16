@@ -15,6 +15,12 @@ public final class TownPermissions {
     public static final TownPermission BANK_WITHDRAW = DummyObjectProvider.createFor(TownPermission.class, "BANK_WITHDRAW");
 
     /**
+     * Allows the resident ALL town permissions, and ignores claim permission overrides.
+     * Use with caution.
+     */
+    public static final TownPermission TOWN_DEPUTY = DummyObjectProvider.createFor(TownPermission.class, "TOWN_DEPUTY");
+
+    /**
      * Allows the resident to kick other residents from the town.
      */
     public static final TownPermission KICK_RESIDENTS = DummyObjectProvider.createFor(TownPermission.class, "KICK_RESIDENTS");

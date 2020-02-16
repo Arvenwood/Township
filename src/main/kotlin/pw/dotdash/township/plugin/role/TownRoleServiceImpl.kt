@@ -2,8 +2,8 @@ package pw.dotdash.township.plugin.role
 
 import com.google.common.collect.Table
 import com.google.common.collect.Tables
-import pw.dotdash.township.api.role.TownRole
-import pw.dotdash.township.api.role.TownRoleService
+import pw.dotdash.township.api.town.TownRole
+import pw.dotdash.township.api.town.TownRoleService
 import pw.dotdash.township.api.town.Town
 import pw.dotdash.township.plugin.storage.DataLoader
 import pw.dotdash.township.plugin.storage.StorageBackedService
@@ -34,12 +34,12 @@ class TownRoleServiceImpl : TownRoleService, StorageBackedService {
 
     override fun register(role: TownRole): Boolean {
         if (role.uniqueId in this.rolesById) return false
-        if (this.rolesByTownAndName.contains(role.townUniqueId, role.name)) return false
+        if (this.rolesByTownAndName.contains(role.townId, role.name)) return false
 
         // TODO: post event
 
         this.rolesById[role.uniqueId] = role
-        this.rolesByTownAndName[role.townUniqueId, role.name] = role
+        this.rolesByTownAndName[role.townId, role.name] = role
         return true
     }
 
@@ -49,7 +49,7 @@ class TownRoleServiceImpl : TownRoleService, StorageBackedService {
         // TODO: post event
 
         this.rolesById.remove(role.uniqueId)
-        this.rolesByTownAndName.remove(role.townUniqueId, role.name)
+        this.rolesByTownAndName.remove(role.townId, role.name)
         return true
     }
 
@@ -59,7 +59,7 @@ class TownRoleServiceImpl : TownRoleService, StorageBackedService {
 
         for (role: TownRole in dataLoader.loadTownRoles()) {
             this.rolesById[role.uniqueId] = role
-            this.rolesByTownAndName[role.townUniqueId, role.name] = role
+            this.rolesByTownAndName[role.townId, role.name] = role
         }
     }
 

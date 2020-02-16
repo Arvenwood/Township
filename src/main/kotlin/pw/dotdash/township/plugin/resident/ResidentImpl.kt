@@ -4,7 +4,6 @@ import pw.dotdash.township.api.resident.Resident
 import pw.dotdash.township.api.town.Town
 import pw.dotdash.township.plugin.storage.DataQueries
 import org.spongepowered.api.data.DataContainer
-import org.spongepowered.api.data.DataQuery
 import org.spongepowered.api.data.DataView
 import org.spongepowered.api.data.Queries
 import org.spongepowered.api.data.persistence.AbstractDataBuilder
@@ -17,9 +16,10 @@ import pw.dotdash.township.api.permission.ClaimPermission
 import pw.dotdash.township.api.permission.Permission
 import pw.dotdash.township.api.permission.TownPermission
 import pw.dotdash.township.api.resident.ResidentService
-import pw.dotdash.township.api.role.Role
-import pw.dotdash.township.api.role.TownRole
-import pw.dotdash.township.api.role.TownRoleService
+import pw.dotdash.township.api.permission.Role
+import pw.dotdash.township.api.town.TownRole
+import pw.dotdash.township.api.town.TownRoleService
+import pw.dotdash.township.api.town.TownService
 import pw.dotdash.township.plugin.util.getUUID
 import pw.dotdash.township.plugin.util.getUUIDList
 import pw.dotdash.township.plugin.util.unwrap
@@ -49,8 +49,11 @@ data class ResidentImpl(
 
     override fun getName(): String = this.name
 
-    override fun getTownUniqueId(): Optional<UUID> =
-        Optional.ofNullable(this.townUniqueId)
+    override fun getTown(): Optional<Town> =
+        Optional.ofNullable(this.townUniqueId).flatMap { TownService.getInstance().getTown(it) }
+
+    override fun hasTown(): Boolean =
+        this.townUniqueId != null
 
     override fun setTown(town: Town?): Boolean {
         getTown().ifPresent {
@@ -62,21 +65,27 @@ data class ResidentImpl(
         return town?.addResident(this) == true
     }
 
-    override fun getFriendIds(): Collection<UUID> =
-        this.friends.toSet()
-
     override fun getFriends(): Collection<Resident> =
         this.friends.mapNotNull { ResidentService.getInstance().getResident(it).unwrap() }
 
-    override fun getTownRoleIds(): Collection<UUID> =
-        this.townRoles.toSet()
+    override fun hasFriend(resident: Resident): Boolean {
+        TODO()
+    }
+
+    override fun addFriend(resident: Resident): Boolean {
+        TODO()
+    }
+
+    override fun removeFriend(resident: Resident): Boolean {
+        TODO()
+    }
 
     override fun getTownRoles(): Collection<TownRole> {
         val roles = ArrayList<TownRole>()
-        this.town.ifPresent {
-            roles += it.visitorRole
-        }
-        return this.townRoles.mapNotNullTo(roles) { TownRoleService.getInstance().getRole(it).unwrap() }
+        this.town.ifPresent { roles += it.visitorRole }
+        this.townRoles.mapNotNullTo(roles) { TownRoleService.getInstance().getRole(it).unwrap() }
+        roles.sortByDescending(TownRole::getPriority)
+        return roles
     }
 
     override fun hasRole(role: TownRole): Boolean =
@@ -84,7 +93,7 @@ data class ResidentImpl(
 
     override fun addRole(role: TownRole): Boolean {
         if (role.uniqueId in this.townRoles) return false
-        if (this.townUniqueId != role.townUniqueId) return false
+        if (this.townUniqueId != role.town.uniqueId) return false
 
         // TODO: post event
 
@@ -101,47 +110,33 @@ data class ResidentImpl(
         return true
     }
 
+    private fun getContextualRoles(claim: Claim): Collection<TownRole> =
+        if (claim.town.uniqueId == this.townUniqueId) {
+            // In their own town?
+            this.getTownRoles()
+        } else {
+            // Not in their own town: use visitor role.
+            listOf(claim.town.visitorRole)
+        }
+
     override fun getPermissionValue(permission: Permission, claim: Claim): Tristate {
-        val roles: Collection<Role> = this.getTownRoles()
+        val roles: Collection<Role> = this.getContextualRoles(claim)
 
         when (permission) {
-            is TownPermission -> {
-                if (claim.town.owner.uniqueId == this.uniqueId) {
+            is TownPermission, is ClaimPermission  -> {
+                if (claim.town.isOwner(this)) {
                     // Town owner can always do stuff in their town.
                     return Tristate.TRUE
                 }
 
                 // Check for any roles with the permission.
                 for (role: Role in roles) {
-                    if (role.hasPermission(permission)) {
-                        return Tristate.TRUE
+                    val value: Tristate = role.getPermissionValue(permission, claim)
+                    if (value != Tristate.UNDEFINED) {
+                        return value
                     }
                 }
 
-                return Tristate.UNDEFINED
-            }
-            is ClaimPermission -> {
-                if (claim.town.owner.uniqueId == this.uniqueId) {
-                    // Town owner can always do stuff in their town.
-                    return Tristate.TRUE
-                }
-
-                // Check for claim overrides for their roles first.
-                for (role: Role in roles) {
-                    val override: Tristate = claim.getPermissionOverride(role, permission)
-                    if (override != Tristate.UNDEFINED) {
-                        return override
-                    }
-                }
-
-                // Then check the roles for the permission.
-                for (role: Role in roles) {
-                    if (role.hasPermission(permission)) {
-                        return Tristate.TRUE
-                    }
-                }
-
-                // Otherwise fail.
                 return Tristate.UNDEFINED
             }
             else -> {
@@ -176,7 +171,7 @@ data class ResidentImpl(
             .set(DataQueries.FRIENDS, this.friends)
             .set(DataQueries.TOWN_ROLES, this.townRoles)
 
-        this.townUniqueId?.let { container.set(DataQueries.TOWN_UNIQUE_ID, it) }
+        this.townUniqueId?.let { container.set(DataQueries.TOWN_ID, it) }
 
         return container
     }
@@ -185,7 +180,7 @@ data class ResidentImpl(
         override fun buildContent(container: DataView): Optional<Resident> {
             val uniqueId: UUID = container.getUUID(DataQueries.UNIQUE_ID).get()
             val name: String = container.getString(DataQueries.NAME).get()
-            val townUniqueId: UUID? = container.getUUID(DataQueries.TOWN_UNIQUE_ID).unwrap()
+            val townUniqueId: UUID? = container.getUUID(DataQueries.TOWN_ID).unwrap()
 
             val friends: List<UUID> = container.getUUIDList(DataQueries.FRIENDS).get()
             val townRoles: List<UUID> = container.getUUIDList(DataQueries.TOWN_ROLES).get()

@@ -13,8 +13,7 @@ import org.spongepowered.api.data.DataQuery
 import org.spongepowered.api.data.DataSerializable
 import org.spongepowered.api.data.DataView
 import org.spongepowered.api.data.persistence.DataFormat
-import pw.dotdash.township.api.role.Role
-import pw.dotdash.township.api.role.TownRole
+import pw.dotdash.township.api.town.TownRole
 import java.nio.file.Files
 import java.nio.file.Path
 

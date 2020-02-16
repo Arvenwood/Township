@@ -8,6 +8,7 @@ import org.spongepowered.api.data.DataView
 import org.spongepowered.api.data.persistence.AbstractDataBuilder
 import org.spongepowered.api.world.Location
 import org.spongepowered.api.world.World
+import pw.dotdash.township.api.town.TownService
 import pw.dotdash.township.plugin.util.getUUID
 import java.util.*
 
@@ -15,7 +16,7 @@ data class WarpImpl(
     private val uniqueId: UUID,
     private val name: String,
     private val location: Location<World>,
-    private val townUniqueId: UUID
+    private val townId: UUID
 ) : Warp {
 
     override fun getUniqueId(): UUID = this.uniqueId
@@ -24,7 +25,11 @@ data class WarpImpl(
 
     override fun getLocation(): Location<World> = this.location
 
-    override fun getTownUniqueId(): UUID = this.townUniqueId
+    override fun getTownId(): UUID = this.townId
+
+    override fun getTown(): Town =
+        TownService.getInstance().getTown(this.townId)
+            .orElseThrow { IllegalStateException("Town $townId is not loaded") }
 
     override fun getContentVersion(): Int = 1
 
@@ -33,20 +38,20 @@ data class WarpImpl(
             .set(DataQueries.UNIQUE_ID, this.uniqueId)
             .set(DataQueries.NAME, this.name)
             .set(DataQueries.LOCATION, this.location)
-            .set(DataQueries.TOWN_UNIQUE_ID, this.townUniqueId)
+            .set(DataQueries.TOWN_ID, this.townId)
 
     object DataBuilder : AbstractDataBuilder<Warp>(Warp::class.java, 1) {
         override fun buildContent(container: DataView): Optional<Warp> {
             val uniqueId: UUID = container.getUUID(DataQueries.UNIQUE_ID).get()
             val name: String = container.getString(DataQueries.NAME).get()
             val location: Location<World> = container.getSerializable(DataQueries.LOCATION, Location::class.java).get() as Location<World>
-            val townUniqueId: UUID = container.getUUID(DataQueries.TOWN_UNIQUE_ID).get()
+            val townId: UUID = container.getUUID(DataQueries.TOWN_ID).get()
 
             val warp = WarpImpl(
                 uniqueId = uniqueId,
                 name = name,
                 location = location,
-                townUniqueId = townUniqueId
+                townId = townId
             )
 
             return Optional.of(warp)
@@ -57,7 +62,7 @@ data class WarpImpl(
 
         private var name: String? = null
         private var location: Location<World>? = null
-        private var town: Town? = null
+        private var townId: UUID? = null
 
         override fun name(name: String): Warp.Builder {
             this.name = name
@@ -70,21 +75,21 @@ data class WarpImpl(
         }
 
         override fun town(town: Town): Warp.Builder {
-            this.town = town
+            this.townId = town.uniqueId
             return this
         }
 
         override fun from(value: Warp): Warp.Builder {
             this.name = value.name
             this.location = value.location
-            this.town = value.town
+            this.townId = value.townId
             return this
         }
 
         override fun reset(): Warp.Builder {
             this.name = null
             this.location = null
-            this.town = null
+            this.townId = null
             return this
         }
 
@@ -92,7 +97,7 @@ data class WarpImpl(
             uniqueId = UUID.randomUUID(),
             name = checkNotNull(this.name),
             location = checkNotNull(this.location),
-            townUniqueId = checkNotNull(this.town).uniqueId
+            townId = checkNotNull(this.townId)
         )
     }
 }
